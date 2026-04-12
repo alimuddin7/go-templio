@@ -1,0 +1,143 @@
+package components
+
+import "fmt"
+
+type InputProps struct {
+	Type        string
+	Name        string
+	Value       string
+	Label       string
+	Placeholder string
+	Required    bool
+	Error       string
+}
+
+templ Input(props InputProps) {
+	<div class="space-y-1">
+		if props.Label != "" {
+			<label for={ props.Name } class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+				{ props.Label }
+				if props.Required {
+					<span class="text-red-500 ml-0.5">*</span>
+				}
+			</label>
+		}
+		<input
+			type={ props.Type }
+			name={ props.Name }
+			id={ props.Name }
+			value={ props.Value }
+			placeholder={ props.Placeholder }
+			required?={ props.Required }
+			class={ "block w-full rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 py-3 px-4 text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all sm:text-sm", 
+				templ.KV("ring-red-500 border-red-500 bg-red-50 dark:bg-red-900/10", props.Error != "") }
+		/>
+		if props.Error != "" {
+			<p class="mt-2 text-sm text-red-600 flex items-center" id={ props.Name + "-error" }>
+				<i data-lucide="alert-circle" class="w-4 h-4 mr-1.5"></i>
+				{ props.Error }
+			</p>
+		}
+	</div>
+}
+
+type TextareaProps struct {
+	Name        string
+	Value       string
+	Label       string
+	Placeholder string
+	Rows        int
+	Required    bool
+	Error       string
+}
+
+templ Textarea(props TextareaProps) {
+	<div class="space-y-1">
+		if props.Label != "" {
+			<label for={ props.Name } class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+				{ props.Label }
+				if props.Required {
+					<span class="text-red-500 ml-0.5">*</span>
+				}
+			</label>
+		}
+		<textarea
+			name={ props.Name }
+			id={ props.Name }
+			rows={ fmt.Sprintf("%d", props.Rows) }
+			placeholder={ props.Placeholder }
+			required?={ props.Required }
+			class={ "block w-full rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 py-3 px-4 text-zinc-900 dark:text-white placeholder:text-zinc-400 focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all sm:text-sm", 
+				templ.KV("ring-red-500 border-red-500 bg-red-50 dark:bg-red-900/10", props.Error != "") }
+		>{ props.Value }</textarea>
+		if props.Error != "" {
+			<p class="mt-2 text-sm text-red-600 flex items-center" id={ props.Name + "-error" }>
+				<i data-lucide="alert-circle" class="w-4 h-4 mr-1.5"></i>
+				{ props.Error }
+			</p>
+		}
+	</div>
+}
+
+type SelectProps struct {
+	Name     string
+	Value    string
+	Label    string
+	Options  []SelectOption
+	Required bool
+	Error    string
+}
+
+type SelectOption struct {
+	Label string
+	Value string
+}
+
+templ Select(props SelectProps) {
+	<div class="space-y-1">
+		if props.Label != "" {
+			<label for={ props.Name } class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+				{ props.Label }
+				if props.Required {
+					<span class="text-red-500 ml-0.5">*</span>
+				}
+			</label>
+		}
+		<select
+			name={ props.Name }
+			id={ props.Name }
+			required?={ props.Required }
+			class={ "block w-full rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50 py-3 px-4 text-zinc-900 dark:text-white focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all sm:text-sm shadow-sm", 
+				templ.KV("ring-red-500 border-red-500 bg-red-50 dark:bg-red-900/10", props.Error != "") }
+		>
+			<option value="">Select option...</option>
+			for _, opt := range props.Options {
+				<option value={ opt.Value } selected?={ opt.Value == props.Value }>{ opt.Label }</option>
+			}
+		</select>
+		if props.Error != "" {
+			<p class="mt-2 text-sm text-red-600 flex items-center" id={ props.Name + "-error" }>
+				<i data-lucide="alert-circle" class="w-4 h-4 mr-1.5"></i>
+				{ props.Error }
+			</p>
+		}
+	</div>
+}
+
+templ FormSection(title, subtitle string) {
+	<div class="pb-8 border-b border-slate-200 dark:border-slate-800 mb-8 last:border-0 last:pb-0">
+		<h2 class="text-lg font-bold text-slate-900 dark:text-white">{ title }</h2>
+		if subtitle != "" {
+			<p class="mt-1 text-sm text-slate-500 dark:text-slate-400">{ subtitle }</p>
+		}
+		<div class="mt-8">
+			{ children... }
+		</div>
+	</div>
+}
+
+templ FormGrid() {
+	<div class="grid grid-cols-1 gap-x-6 gap-y-6 sm:grid-cols-2">
+		{ children... }
+	</div>
+}

@@ -1,0 +1,116 @@
+package {{.PackageName}}repo
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+	"time"
+
+	"github.com/uptrace/bun"
+
+	"{{.ModulePath}}/internal/domain/{{.PackageName}}"
+)
+
+// {{.Name}}Model is the private Bun ORM model.
+type {{.Name}}Model struct {
+	bun.BaseModel `bun:"table:{{.TableName}},alias:t"`
+
+	ID        int64     `bun:"id,pk,autoincrement"`
+	{{- range .Fields}}
+	{{.GoName}} {{.GoType}} `bun:"{{.ColumnName}},notnull"`
+	{{- end}}
+	CreatedAt time.Time `bun:"created_at,notnull,default:current_timestamp"`
+	UpdatedAt time.Time `bun:"updated_at,notnull,default:current_timestamp"`
+}
+
+// Repository is the Bun implementation of {{.PackageName}}.Repository.
+type Repository struct {
+	db *bun.DB
+}
+
+// New returns a new Repository.
+func New(db *bun.DB) *Repository { return &Repository{db: db} }
+
+// Migrate creates the {{.TableName}} table if it does not exist.
+func (r *Repository) Migrate(ctx context.Context) error {
+	_, err := r.db.NewCreateTable().Model((*{{.Name}}Model)(nil)).IfNotExists().Exec(ctx)
+	return err
+}
+
+func (r *Repository) FindByID(ctx context.Context, id int64) (*{{.PackageName}}.{{.Name}}, error) {
+	m := new({{.Name}}Model)
+	err := r.db.NewSelect().Model(m).Where("id = ?", id).Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, {{.PackageName}}.Err{{.Name}}NotFound
+		}
+		return nil, err
+	}
+	return toEntity(m), nil
+}
+
+func (r *Repository) List(ctx context.Context, offset, limit int) ([]*{{.PackageName}}.{{.Name}}, int64, error) {
+	var models []{{.Name}}Model
+	total, err := r.db.NewSelect().Model(&models).OrderExpr("id ASC").Offset(offset).Limit(limit).ScanAndCount(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	out := make([]*{{.PackageName}}.{{.Name}}, len(models))
+	for i, m := range models {
+		m := m
+		out[i] = toEntity(&m)
+	}
+	return out, int64(total), nil
+}
+
+func (r *Repository) Create(ctx context.Context, e *{{.PackageName}}.{{.Name}}) error {
+	m := fromEntity(e)
+	m.CreatedAt = time.Now()
+	m.UpdatedAt = time.Now()
+	_, err := r.db.NewInsert().Model(m).Returning("id").Exec(ctx)
+	if err != nil {
+		return err
+	}
+	e.ID = m.ID
+	e.CreatedAt = m.CreatedAt
+	e.UpdatedAt = m.UpdatedAt
+	return nil
+}
+
+func (r *Repository) Update(ctx context.Context, e *{{.PackageName}}.{{.Name}}) error {
+	m := fromEntity(e)
+	m.UpdatedAt = time.Now()
+	_, err := r.db.NewUpdate().Model(m).
+		Column({{range .Fields}}"{{.ColumnName}}", {{end}}"updated_at").
+		Where("id = ?", m.ID).Exec(ctx)
+	return err
+}
+
+func (r *Repository) Delete(ctx context.Context, id int64) error {
+	_, err := r.db.NewDelete().TableExpr("{{.TableName}}").Where("id = ?", id).Exec(ctx)
+	return err
+}
+
+// ── translation ───────────────────────────────────────────────────────────────
+
+func toEntity(m *{{.Name}}Model) *{{.PackageName}}.{{.Name}} {
+	return &{{.PackageName}}.{{.Name}}{
+		ID: m.ID,
+		{{- range .Fields}}
+		{{.GoName}}: m.{{.GoName}},
+		{{- end}}
+		CreatedAt: m.CreatedAt,
+		UpdatedAt: m.UpdatedAt,
+	}
+}
+
+func fromEntity(e *{{.PackageName}}.{{.Name}}) *{{.Name}}Model {
+	return &{{.Name}}Model{
+		ID: e.ID,
+		{{- range .Fields}}
+		{{.GoName}}: e.{{.GoName}},
+		{{- end}}
+		CreatedAt: e.CreatedAt,
+		UpdatedAt: e.UpdatedAt,
+	}
+}

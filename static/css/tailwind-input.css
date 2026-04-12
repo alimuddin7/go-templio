@@ -1,0 +1,101 @@
+@import "tailwindcss";
+
+@source "../../views/**/*.templ";
+@source "../../internal/transport/http/handler/**/*.go";
+
+@theme {
+  --color-brand: #4f46e5; /* Indigo 600 */
+  --color-primary: var(--color-brand);
+  --color-surface-light: var(--color-zinc-50);
+  --color-surface-dark: var(--color-zinc-950);
+  
+  --sidebar-width: 16rem;
+  --sidebar-width-collapsed: 4.5rem;
+}
+
+/* Enable class-based dark mode for Tailwind v4 */
+@variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  /* Dynamic Sidebar Variables */
+  :root {
+    --current-sidebar-width: var(--sidebar-width);
+    color-scheme: light;
+  }
+
+  :root.dark {
+    color-scheme: dark;
+  }
+
+  /* When the sidebar-collapsed class is on HTML, update the variable for everyone */
+  :root.sidebar-collapsed {
+    --current-sidebar-width: var(--sidebar-width-collapsed);
+  }
+
+  body {
+    @apply antialiased transition-colors duration-300;
+  }
+  
+  /* Reset inputs for consistent appearance across themes */
+  input:not([type="checkbox"]):not([type="radio"]), 
+  select, 
+  textarea {
+    @apply bg-white border border-zinc-200 text-zinc-900 rounded-xl shadow-sm focus:ring-2 focus:ring-indigo-600 focus:border-indigo-600 transition-all sm:text-sm;
+  }
+
+  .dark input:not([type="checkbox"]):not([type="radio"]), 
+  .dark select, 
+  .dark textarea {
+    @apply bg-zinc-900 border-zinc-800 text-zinc-100 placeholder:text-zinc-500 focus:ring-indigo-500 focus:border-indigo-500;
+  }
+}
+
+@layer utilities {
+  /* Dynamic Margin/Padding for Main Content */
+  .main-content-push {
+    margin-left: var(--current-sidebar-width);
+    transition: margin-left 0.3s ease-in-out;
+  }
+
+  @media (max-width: 1024px) {
+    .main-content-push {
+      margin-left: 0 !important;
+    }
+  }
+
+  /* Sidebar Transitions */
+  .sidebar-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+
+  /* Sidebar Width States */
+  aside#sidebar {
+    width: var(--current-sidebar-width);
+  }
+
+  /* Hover to expand ONLY when collapsed and on Desktop */
+  @media (min-width: 1024px) {
+    .sidebar-collapsed aside#sidebar:hover {
+      width: var(--sidebar-width);
+      @apply shadow-2xl z-50;
+    }
+
+    /* Hide text when collapsed, but show on hover */
+    .sidebar-collapsed .sidebar-text {
+      @apply hidden opacity-0;
+    }
+
+    .sidebar-collapsed aside#sidebar:hover .sidebar-text {
+      @apply inline-block opacity-100;
+    }
+    
+    /* Ensure icons don't shrink */
+    .sidebar-collapsed aside#sidebar i {
+      @apply shrink-0;
+    }
+  }
+
+  .sidebar-collapsed .sidebar-tooltip {
+    @apply hidden;
+  }
+}

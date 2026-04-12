@@ -1,0 +1,119 @@
+package layout
+
+templ Navbar(data PageData) {
+	<header class="sticky top-0 z-30 flex h-16 w-full shrink-0 items-center gap-x-4 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8 transition-colors duration-200 backdrop-blur-md">
+		<!-- Desktop Sidebar Toggle -->
+		<button 
+			id="sidebar-desktop-toggle" 
+			class="hidden lg:flex items-center justify-center h-9 w-9 text-zinc-400 hover:text-indigo-600 transition-colors rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900"
+			onclick="toggleSidebar()">
+			<i data-lucide="panel-left" class="h-5 w-5"></i>
+		</button>
+
+		<!-- Mobile Sidebar Toggle -->
+		<button 
+			id="sidebar-mobile-toggle" 
+			class="lg:hidden -m-2.5 p-2.5 text-slate-700 dark:text-slate-300"
+			onclick="openMobileSidebar()">
+			<span class="sr-only">Open sidebar</span>
+			<i data-lucide="menu" class="h-6 w-6"></i>
+		</button>
+
+		<div class="h-6 w-px bg-zinc-200 dark:bg-zinc-800 lg:hidden" aria-hidden="true"></div>
+
+		<div class="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
+			<!-- Breadcrumbs -->
+			<nav class="flex flex-1 items-center" aria-label="Breadcrumb">
+				@breadcrumbs(data.CurrentPath)
+			</nav>
+
+			<div class="flex items-center gap-x-4 lg:gap-x-6">
+				<!-- Theme Switcher -->
+				<button 
+					onclick="toggleTheme()" 
+					class="p-2 text-zinc-500 dark:text-zinc-400 hover:text-indigo-600 transition-colors rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-900"
+					title="Toggle theme"
+					id="theme-toggle">
+					<!-- Sun icon shows in light mode, Moon shows in dark mode -->
+					<i data-lucide="sun" class="h-5 w-5 block dark:hidden"></i>
+					<i data-lucide="moon" class="h-5 w-5 hidden dark:block"></i>
+				</button>
+
+				<!-- Notifications (Mock) -->
+				<button type="button" class="-m-2.5 p-2.5 text-slate-400 hover:text-indigo-600 relative transition-colors">
+					<span class="sr-only">View notifications</span>
+					<i data-lucide="bell" class="h-6 w-6"></i>
+					<span class="absolute top-2.5 right-2.5 flex h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-slate-900 transition-all"></span>
+				</button>
+
+				<!-- Separator -->
+				<div class="hidden lg:block lg:h-6 lg:w-px lg:bg-zinc-200 dark:lg:bg-zinc-800" aria-hidden="true"></div>
+
+				<!-- User Profile Dropdown -->
+				<div class="relative">
+					<button 
+						type="button" 
+						class="-m-1.5 flex items-center p-1.5 group" 
+						id="user-menu-button" 
+						aria-expanded="false" 
+						aria-haspopup="true"
+						onclick="toggleUserMenu()">
+						<span class="sr-only">Open user menu</span>
+						<div class="h-8 w-8 rounded-full bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 flex items-center justify-center font-bold text-xs ring-2 ring-transparent group-hover:ring-indigo-100 dark:group-hover:ring-indigo-900/40 transition-all">
+							{ UserInitials(data.UserName) }
+						</div>
+						<span class="hidden lg:flex lg:items-center">
+							<span class="ml-4 text-sm font-semibold leading-6 text-slate-900 dark:text-slate-100" aria-hidden="true">{ data.UserName }</span>
+							<i data-lucide="chevron-down" class="ml-2 h-5 w-5 text-slate-400 group-hover:text-indigo-600 transition-colors"></i>
+						</span>
+					</button>
+
+					<!-- Dropdown menu -->
+					<div 
+						id="user-menu-dropdown" 
+						class="absolute right-0 z-10 mt-2.5 w-48 origin-top-right rounded-xl bg-white dark:bg-slate-800 py-2 shadow-xl ring-1 ring-slate-900/5 dark:ring-white/10 focus:outline-none hidden transition-all" 
+						role="menu" 
+						aria-orientation="vertical" 
+						aria-labelledby="user-menu-button">
+						<div class="px-4 py-2 border-b border-slate-100 dark:border-slate-700/50 mb-1 lg:hidden">
+							<p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">{ data.UserRole }</p>
+						</div>
+						<a href="/profile" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50" role="menuitem">Your Profile</a>
+						<a href="/settings" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50" role="menuitem">Settings</a>
+						<div class="my-1 h-px bg-slate-100 dark:bg-slate-700/50"></div>
+						<a href="/logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10" role="menuitem">Sign out</a>
+					</div>
+				</div>
+			</div>
+		</div>
+	</header>
+}
+
+templ breadcrumbs(path string) {
+	<nav class="flex overflow-hidden" aria-label="Breadcrumb">
+		<ol role="list" class="flex items-center space-x-2">
+			<li>
+				<div>
+					<a href="/" class="text-slate-400 hover:text-indigo-600 transition-colors">
+						<i data-lucide="home" class="h-5 w-5 shrink-0"></i>
+						<span class="sr-only">Home</span>
+					</a>
+				</div>
+			</li>
+			for _, segment := range BuildBreadcrumbs(path) {
+				<li>
+					<div class="flex items-center">
+						<i data-lucide="chevron-right" class="h-4 w-4 shrink-0 text-slate-300 dark:text-slate-700 mx-1"></i>
+						if segment.IsLast {
+							<span class="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate max-w-[120px] sm:max-w-none">{ segment.Label }</span>
+						} else {
+							<a href={ templ.SafeURL(segment.Href) } class="text-sm font-medium text-slate-400 hover:text-indigo-600 transition-colors truncate max-w-[100px] sm:max-w-none">
+								{ segment.Label }
+							</a>
+						}
+					</div>
+				</li>
+			}
+		</ol>
+	</nav>
+}

@@ -1,0 +1,136 @@
+package userviews
+
+import (
+	"fmt"
+	"templio.local/cms/internal/domain/user"
+	"templio.local/cms/internal/navigation"
+	"templio.local/cms/views/layout"
+	"templio.local/cms/views/components"
+)
+
+templ List(users []*user.User, total int64, page, pageSize int, search string, navItems []navigation.Item) {
+	@layout.Base(layout.PageData{
+		Title:       "User Management",
+		NavItems:    navItems,
+		CurrentPath: "/users",
+	}) {
+		<div class="sm:flex sm:items-center sm:justify-between mb-8">
+			<div>
+				<h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Users</h1>
+				<p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+					A list of all users in your account including their name, title, email and role.
+				</p>
+			</div>
+			<div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+				<a href="/users/new" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all active:scale-95">
+					<i data-lucide="user-plus" class="mr-2 h-4 w-4"></i>
+					Add user
+				</a>
+			</div>
+		</div>
+
+		<!-- Filter & Search Bar -->
+		<div class="mb-6 flex flex-col sm:flex-row gap-4 items-end bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+			<form method="GET" action="/users" class="flex flex-1 gap-4 items-end">
+				<div class="flex-1 max-w-sm">
+					<label for="search" class="block text-xs font-semibold text-slate-500 uppercase mb-1">Search</label>
+					<div class="relative">
+						<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+							<i data-lucide="search" class="h-4 w-4 text-slate-400"></i>
+						</div>
+						<input type="text" name="q" id="search" value={ search }
+							class="block w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 pl-10 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6" 
+							placeholder="Search users..."/>
+					</div>
+				</div>
+				<input type="hidden" name="ps" value={ fmt.Sprintf("%d", pageSize) }/>
+				<button type="submit" class="inline-flex items-center rounded-lg bg-white dark:bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-900 dark:text-white shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all">
+					Search
+				</button>
+				if search != "" {
+					<a href="/users" class="text-sm text-slate-500 hover:text-indigo-600 transition-colors py-2 px-2">Clear</a>
+				}
+			</form>
+		</div>
+
+		<!-- Table card -->
+		<div class="overflow-hidden bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 sm:rounded-xl border border-slate-200 dark:border-slate-800 transition-colors">
+			<div class="overflow-x-auto">
+				<table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+					<thead class="bg-slate-50 dark:bg-slate-800/50">
+						<tr>
+							<th scope="col" class="py-4 pl-4 pr-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sm:pl-6">User</th>
+							<th scope="col" class="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Role</th>
+							<th scope="col" class="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Joined</th>
+							<th scope="col" class="relative py-4 pl-3 pr-4 sm:pr-6">
+								<span class="sr-only">Actions</span>
+							</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
+						if len(users) == 0 {
+							<tr>
+								<td colspan="4" class="px-6 py-24 text-center">
+									<div class="flex flex-col items-center">
+										<div class="p-4 rounded-full bg-slate-50 dark:bg-slate-800/50 text-slate-400 mb-4 shadow-inner">
+											<i data-lucide="users" class="h-10 w-10"></i>
+										</div>
+										<h3 class="text-sm font-semibold text-slate-900 dark:text-white">No users found</h3>
+										<p class="mt-1 text-sm text-slate-500 max-w-xs mx-auto">Try adjusting your search or add a new user to get started.</p>
+										<div class="mt-6">
+											<a href="/users/new" class="inline-flex items-center rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 active:scale-95 transition-all">
+												Add new user
+											</a>
+										</div>
+									</div>
+								</td>
+							</tr>
+						} else {
+							for _, u := range users {
+								<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+									<td class="whitespace-nowrap py-5 pl-4 pr-3 text-sm sm:pl-6">
+										<div class="flex items-center">
+											<div class="h-10 w-10 flex-shrink-0">
+												<div class="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold border border-slate-200 dark:border-slate-700">
+													{ string(u.Name[0]) }
+												</div>
+											</div>
+											<div class="ml-4">
+												<div class="font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">{ u.Name }</div>
+												<div class="mt-1 text-slate-500 dark:text-slate-400">{ u.Email }</div>
+											</div>
+										</div>
+									</td>
+									<td class="whitespace-nowrap px-3 py-5 text-sm">
+										<span class="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-1 text-xs font-medium text-slate-700 dark:text-slate-300 ring-1 ring-inset ring-slate-600/10 dark:ring-slate-400/20 uppercase tracking-tighter">
+											{ string(u.Role) }
+										</span>
+									</td>
+									<td class="whitespace-nowrap px-3 py-5 text-sm text-slate-500 dark:text-slate-400">
+										{ u.CreatedAt.Format("02 Jan 2006") }
+									</td>
+									<td class="relative whitespace-nowrap py-5 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+										<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+											<a href={ templ.SafeURL(fmt.Sprintf("/users/%d/edit", u.ID)) } class="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+												<i data-lucide="pencil" class="h-4 w-4"></i>
+											</a>
+											<form method="POST" action={ templ.SafeURL(fmt.Sprintf("/users/%d/delete", u.ID)) } 
+												onsubmit="return confirm('Are you sure you want to delete this user?')">
+												<button type="submit" class="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
+													<i data-lucide="trash-2" class="h-4 w-4"></i>
+												</button>
+											</form>
+										</div>
+									</td>
+								</tr>
+							}
+						}
+					</tbody>
+				</table>
+			</div>
+			
+			<!-- Pagination -->
+			@components.Pagination(page, int(total), pageSize, search)
+		</div>
+	}
+}

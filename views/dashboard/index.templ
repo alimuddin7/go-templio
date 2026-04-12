@@ -1,0 +1,57 @@
+package dashboard
+
+import "templio.local/cms/views/layout"
+
+templ Index(data layout.PageData) {
+	@layout.Base(data) {
+		<div class="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+			<div class="w-20 h-20 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-2xl flex items-center justify-center mb-8 shadow-sm transition-transform hover:scale-110">
+				<i data-lucide="layout-dashboard" class="w-10 h-10"></i>
+			</div>
+			
+			<div class="space-y-4 max-w-2xl mx-auto">
+				<h1 class="text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl">
+					Welcome to <span class="bg-gradient-to-r from-indigo-600 to-indigo-500 bg-clip-text text-transparent">go-templio</span>
+				</h1>
+				<p class="text-lg text-slate-500 dark:text-slate-400">
+					Your modular CMS engine is ready. Use the sidebar to manage resources or use the CLI to scaffold new modules in seconds.
+				</p>
+			</div>
+			
+			<div class="mt-12 flex flex-col sm:flex-row items-center justify-center gap-4">
+				<a href="/users" class="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-8 py-3.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 transition-all active:scale-95">
+					<i data-lucide="users" class="h-4 w-4"></i>
+					Manage Users
+				</a>
+				<a href="https://github.com/templio/docs" class="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-white dark:bg-slate-800 px-8 py-3.5 text-sm font-bold text-slate-900 dark:text-slate-100 shadow-sm border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all">
+					Learn more <i data-lucide="arrow-right" class="h-4 w-4"></i>
+				</a>
+			</div>
+
+			<!-- Quick Stats / Shortcuts (Placeholder) -->
+			<div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-16 w-full max-w-4xl text-left">
+				<div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 shadow-sm transition-all hover:shadow-md">
+					<div class="h-10 w-10 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg flex items-center justify-center mb-4">
+						<i data-lucide="file-text" class="h-5 w-5"></i>
+					</div>
+					<h3 class="font-bold text-slate-900 dark:text-white">Content</h3>
+					<p class="text-sm text-slate-500 mt-1">Manage posts and categories.</p>
+				</div>
+				<div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 shadow-sm transition-all hover:shadow-md">
+					<div class="h-10 w-10 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-lg flex items-center justify-center mb-4">
+						<i data-lucide="shield-check" class="h-5 w-5"></i>
+					</div>
+					<h3 class="font-bold text-slate-900 dark:text-white">Security</h3>
+					<p class="text-sm text-slate-500 mt-1">Configure roles and permissions.</p>
+				</div>
+				<div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-700 shadow-sm transition-all hover:shadow-md">
+					<div class="h-10 w-10 bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 rounded-lg flex items-center justify-center mb-4">
+						<i data-lucide="terminal" class="h-5 w-5"></i>
+					</div>
+					<h3 class="font-bold text-slate-900 dark:text-white">CLI Tool</h3>
+					<p class="text-sm text-slate-500 mt-1">Scaffold new modules easily.</p>
+				</div>
+			</div>
+		</div>
+	}
+}

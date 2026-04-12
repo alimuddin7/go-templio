@@ -1,0 +1,78 @@
+package {{.PackageName}}views
+
+import (
+	"fmt"
+	"{{.ModulePath}}/internal/domain/{{.PackageName}}"
+	"{{.ModulePath}}/internal/navigation"
+	"{{.ModulePath}}/views/layout"
+)
+
+templ List(items []*{{.PackageName}}.{{.Name}}, total int64, page int, navItems []navigation.Item) {
+	@layout.Base(layout.PageData{
+		Title:    "{{.PluralName}}",
+		NavItems: navItems,
+		CurrentPath: "/{{.URLPrefix}}",
+	}) {
+		<div class="page-header">
+			<div class="page-header-left">
+				<h1 class="page-title">{{.PluralName}}</h1>
+				<p class="page-subtitle">{ fmt.Sprintf("%d total", total) }</p>
+			</div>
+			<div class="page-header-right">
+				<a href="/{{.URLPrefix}}/new" class="btn btn--primary" id="create-{{.PackageName}}-btn">
+					<i data-lucide="plus"></i> New {{.Name}}
+				</a>
+			</div>
+		</div>
+
+		<div class="card">
+			<div class="card-body p-0">
+				<table class="table" id="{{.PackageName}}-table">
+					<thead>
+						<tr>
+							<th>#</th>
+							{{- range .Fields}}
+							<th>{{.Label}}</th>
+							{{- end}}
+							<th class="text-right">Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						if len(items) == 0 {
+							<tr>
+								<td colspan="{{ add (len .Fields) 2 }}" class="table-empty">
+									<div class="empty-state">
+										<p>No {{.PluralName}} found</p>
+										<a href="/{{.URLPrefix}}/new" class="btn btn--sm btn--outline">Create first</a>
+									</div>
+								</td>
+							</tr>
+						} else {
+							for _, item := range items {
+								<tr class="table-row" id={ fmt.Sprintf("{{.PackageName}}-row-%d", item.ID) }>
+									<td class="table-cell text-muted">{ fmt.Sprintf("%d", item.ID) }</td>
+									{{- range .Fields}}
+									<td class="table-cell">{ fmt.Sprintf("%v", item.{{.GoName}}) }</td>
+									{{- end}}
+									<td class="table-cell text-right">
+										<div class="action-group">
+											<a href={ templ.SafeURL(fmt.Sprintf("/{{.URLPrefix}}/%d/edit", item.ID)) } class="btn btn--sm btn--ghost">
+												<i data-lucide="pencil"></i>
+											</a>
+											<form method="POST" action={ templ.SafeURL(fmt.Sprintf("/{{.URLPrefix}}/%d/delete", item.ID)) }
+												onsubmit="return confirm('Delete this record?')">
+												<button type="submit" class="btn btn--sm btn--ghost btn--danger">
+													<i data-lucide="trash-2"></i>
+												</button>
+											</form>
+										</div>
+									</td>
+								</tr>
+							}
+						}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	}
+}

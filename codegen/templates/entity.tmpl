@@ -1,0 +1,34 @@
+package {{.PackageName}}
+
+import "time"
+
+// {{.Name}} is the domain entity for the {{.Name}} aggregate.
+// It has no dependency on any ORM, framework, or transport layer.
+type {{.Name}} struct {
+	ID        int64
+	{{- range .Fields}}
+	{{.GoName}} {{.GoType}}
+	{{- end}}
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// Create{{.Name}}Input holds validated data required to create a new {{.Name}}.
+type Create{{.Name}}Input struct {
+	{{- range .Fields}}
+	{{.GoName}} {{.GoType}}
+	{{- end}}
+}
+
+// Update{{.Name}}Input holds fields that can be mutated after creation.
+// Pointer fields allow partial updates (nil = don't touch).
+type Update{{.Name}}Input struct {
+	{{- range .Fields}}
+	{{.GoName}} *{{.GoType}}
+	{{- end}}
+}
+
+// Sentinel errors
+var (
+	Err{{.Name}}NotFound = errors.New("{{.PackageName}}: not found")
+)

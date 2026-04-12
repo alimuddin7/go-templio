@@ -1,0 +1,96 @@
+package userviews
+
+import (
+	"templio.local/cms/internal/navigation"
+	"templio.local/cms/views/layout"
+	"templio.local/cms/views/components"
+)
+
+templ Create(navItems []navigation.Item, formErr error) {
+	@layout.Base(layout.PageData{
+		Title:       "New User",
+		NavItems:    navItems,
+		CurrentPath: "/users",
+	}) {
+		<div class="mb-8">
+			<nav class="flex mb-4" aria-label="Back">
+				<a href="/users" class="flex items-center text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors group">
+					<i data-lucide="arrow-left" class="mr-2 h-4 w-4 transition-transform group-hover:-translate-x-1"></i>
+					Back to Users
+				</a>
+			</nav>
+			<h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">New User</h1>
+			<p class="mt-2 text-sm text-slate-500 dark:text-slate-400">Create a new administrative or editorial account.</p>
+		</div>
+
+		<div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors">
+			<div class="p-6 sm:p-10">
+				if formErr != nil {
+					<div class="mb-8 rounded-xl bg-red-50 dark:bg-red-900/10 p-4 border border-red-100 dark:border-red-900/30">
+						<div class="flex">
+							<div class="flex-shrink-0">
+								<i data-lucide="alert-circle" class="h-5 w-5 text-red-500"></i>
+							</div>
+							<div class="ml-3">
+								<h3 class="text-sm font-bold text-red-800 dark:text-red-400">Submission Error</h3>
+								<div class="mt-1 text-sm text-red-700 dark:text-red-300">
+									<p>{ formErr.Error() }</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				}
+
+				<form method="POST" action="/users" id="create-user-form" novalidate>
+					@components.FormSection("Account Details", "Identification and credentialing for the new account.") {
+						@components.FormGrid() {
+							@components.Input(components.InputProps{
+								Label: "Full Name",
+								Name: "name",
+								Type: "text",
+								Placeholder: "Jane Doe",
+								Required: true,
+							})
+							
+							@components.Input(components.InputProps{
+								Label: "Email Address",
+								Name: "email",
+								Type: "email",
+								Placeholder: "jane@example.com",
+								Required: true,
+							})
+
+							@components.Input(components.InputProps{
+								Label: "Password",
+								Name: "password",
+								Type: "password",
+								Placeholder: "Min. 8 characters",
+								Required: true,
+							})
+
+							@components.Select(components.SelectProps{
+								Label: "Role",
+								Name: "role",
+								Required: true,
+								Options: []components.SelectOption{
+									{Label: "Viewer", Value: "viewer"},
+									{Label: "Editor", Value: "editor"},
+									{Label: "Admin", Value: "admin"},
+								},
+							})
+						}
+					}
+
+					<div class="mt-10 flex items-center justify-end gap-x-4 border-t border-slate-200 dark:border-slate-800 pt-8">
+						<a href="/users" class="text-sm font-semibold leading-6 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
+							Cancel
+						</a>
+						<button type="submit" class="rounded-lg bg-indigo-600 px-8 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 active:scale-95 transition-all">
+							Create User
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	}
+}

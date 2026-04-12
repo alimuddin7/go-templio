@@ -1,0 +1,44 @@
+package components
+
+type DatePickerProps struct {
+	Name        string
+	Value       string
+	Label       string
+	Placeholder string
+	Required    bool
+	Error       string
+}
+
+templ DatePicker(props DatePickerProps) {
+	<div class="space-y-1">
+		if props.Label != "" {
+			<label for={ props.Name } class="block text-sm font-medium text-slate-700 dark:text-slate-300">
+				{ props.Label }
+				if props.Required {
+					<span class="text-red-500 ml-0.5">*</span>
+				}
+			</label>
+		}
+		<div class="relative">
+			<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+				<i data-lucide="calendar" class="h-4 w-4 text-slate-400"></i>
+			</div>
+			<input
+				type="date"
+				name={ props.Name }
+				id={ props.Name }
+				value={ props.Value }
+				required?={ props.Required }
+				class={ "block w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2.5 pl-10 pr-4 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-600 transition-all sm:text-sm sm:leading-6", 
+					templ.KV("ring-2 ring-red-300 border-red-300 focus:ring-red-500", props.Error != ""),
+					templ.KV("shadow-sm", props.Error == "") }
+			/>
+		</div>
+		if props.Error != "" {
+			<p class="mt-2 text-sm text-red-600 flex items-center" id={ props.Name + "-error" }>
+				<i data-lucide="alert-circle" class="w-4 h-4 mr-1.5"></i>
+				{ props.Error }
+			</p>
+		}
+	</div>
+}

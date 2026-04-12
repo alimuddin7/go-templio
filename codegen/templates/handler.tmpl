@@ -1,0 +1,100 @@
+package {{.PackageName}}handler
+
+import (
+	"errors"
+	"strconv"
+
+	"github.com/gofiber/fiber/v3"
+
+	"{{.ModulePath}}/internal/domain/{{.PackageName}}"
+	"{{.ModulePath}}/internal/engine"
+	"{{.ModulePath}}/internal/navigation"
+	{{.PackageName}}views "{{.ModulePath}}/views/{{.PackageName}}"
+)
+
+// Handler wires Fiber routes to {{.PackageName}}.Service.
+type Handler struct {
+	svc {{.PackageName}}.Service
+	nav *navigation.Registry
+}
+
+// New creates a Handler.
+func New(svc {{.PackageName}}.Service, nav *navigation.Registry) *Handler {
+	return &Handler{svc: svc, nav: nav}
+}
+
+// Register mounts CRUD routes under /{{.URLPrefix}}.
+func (h *Handler) Register(r fiber.Router) {
+	g := r.Group("/{{.URLPrefix}}")
+	g.Get("/",        h.list)
+	g.Get("/new",     h.createForm)
+	g.Post("/",       h.create)
+	g.Get("/:id/edit", h.updateForm)
+	g.Post("/:id",    h.update)
+	g.Post("/:id/delete", h.delete)
+}
+
+func (h *Handler) list(c fiber.Ctx) error {
+	page := queryInt(c, "page", 1)
+	items, total, err := h.svc.List(c.Context(), page, 20)
+	if err != nil { return err }
+	return engine.Render(c, {{.PackageName}}views.List(items, total, page, h.nav.Items()))
+}
+
+func (h *Handler) createForm(c fiber.Ctx) error {
+	return engine.Render(c, {{.PackageName}}views.Create(h.nav.Items(), nil))
+}
+
+func (h *Handler) create(c fiber.Ctx) error {
+	var in {{.PackageName}}.Create{{.Name}}Input
+	if err := c.Bind().Body(&in); err != nil {
+		return engine.Render(c, {{.PackageName}}views.Create(h.nav.Items(), err), fiber.StatusUnprocessableEntity)
+	}
+	if _, err := h.svc.Create(c.Context(), in); err != nil {
+		return engine.Render(c, {{.PackageName}}views.Create(h.nav.Items(), err), fiber.StatusUnprocessableEntity)
+	}
+	return c.Redirect().To("/{{.URLPrefix}}")
+}
+
+func (h *Handler) updateForm(c fiber.Ctx) error {
+	id, err := pathID(c)
+	if err != nil { return fiber.ErrBadRequest }
+	item, err := h.svc.GetByID(c.Context(), id)
+	if errors.Is(err, {{.PackageName}}.Err{{.Name}}NotFound) { return fiber.ErrNotFound }
+	if err != nil { return err }
+	return engine.Render(c, {{.PackageName}}views.Update(item, h.nav.Items(), nil))
+}
+
+func (h *Handler) update(c fiber.Ctx) error {
+	id, err := pathID(c)
+	if err != nil { return fiber.ErrBadRequest }
+	var in {{.PackageName}}.Update{{.Name}}Input
+	if err := c.Bind().Body(&in); err != nil {
+		item, _ := h.svc.GetByID(c.Context(), id)
+		return engine.Render(c, {{.PackageName}}views.Update(item, h.nav.Items(), err), fiber.StatusUnprocessableEntity)
+	}
+	if _, err := h.svc.Update(c.Context(), id, in); err != nil {
+		item, _ := h.svc.GetByID(c.Context(), id)
+		return engine.Render(c, {{.PackageName}}views.Update(item, h.nav.Items(), err), fiber.StatusUnprocessableEntity)
+	}
+	return c.Redirect().To("/{{.URLPrefix}}")
+}
+
+func (h *Handler) delete(c fiber.Ctx) error {
+	id, err := pathID(c)
+	if err != nil { return fiber.ErrBadRequest }
+	if err := h.svc.Delete(c.Context(), id); err != nil { return err }
+	return c.Redirect().To("/{{.URLPrefix}}")
+}
+
+func pathID(c fiber.Ctx) (int64, error) {
+	return strconv.ParseInt(c.Params("id"), 10, 64)
+}
+
+func queryInt(c fiber.Ctx, key string, def int) int {
+	v := c.Query(key)
+	if v == "" { return def }
+	n, err := strconv.Atoi(v)
+	if err != nil { return def }
+	return n
+}

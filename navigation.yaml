@@ -1,0 +1,12 @@
+- href: /
+  icon: layout-dashboard
+  label: Dashboard
+  order: 1
+- href: /users
+  icon: users
+  label: Users
+  order: 2
+- href: /settings
+  icon: settings
+  label: Settings
+  order: 99

@@ -1,0 +1,124 @@
+package layout
+
+import (
+	"fmt"
+	"templio.local/cms/internal/navigation"
+)
+
+templ Sidebar(data PageData) {
+	<!-- Main Sidebar Container -->
+	<aside 
+		id="sidebar" 
+		class="sidebar-transition fixed inset-y-0 left-0 z-50 flex flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 transition-all -translate-x-full lg:translate-x-0 w-[var(--sidebar-width)] shadow-xl lg:shadow-none">
+		<div class="flex h-16 shrink-0 items-center border-b border-zinc-200 dark:border-zinc-800 px-6">
+			<a href="/" class="flex items-center gap-3 group">
+				<div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-200">
+					<i data-lucide="layers" class="h-5 w-5"></i>
+				</div>
+				<span class="sidebar-text text-xl font-bold tracking-tight text-zinc-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors whitespace-nowrap">templio</span>
+			</a>
+		</div>
+
+		<nav class="flex flex-1 flex-col overflow-y-auto p-4 custom-scrollbar">
+			<ul role="list" class="flex flex-1 flex-col gap-y-7">
+				<li>
+					<ul role="list" class="-mx-2 space-y-1">
+						<li>
+							<a href="/" class={ "group flex gap-x-3 rounded-xl p-2.5 text-sm font-semibold leading-6 transition-all", 
+								templ.KV("bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 shadow-sm", data.CurrentPath == "/"),
+								templ.KV("text-zinc-500 hover:text-indigo-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900", data.CurrentPath != "/") }>
+								<i data-lucide="layout-dashboard" class="h-5 w-5 shrink-0 transition-transform group-hover:scale-110"></i>
+								<span class="sidebar-text">Dashboard</span>
+							</a>
+						</li>
+					</ul>
+				</li>
+
+				<li>
+					<div class="sidebar-text text-xs font-bold leading-6 text-zinc-400 uppercase tracking-widest px-3 mb-2">Navigation</div>
+					<ul role="list" class="-mx-2 space-y-1">
+						for i, item := range data.NavItems {
+							if item.Href != "/" {
+								@sidebarItem(item, data.CurrentPath, i)
+							}
+						}
+					</ul>
+				</li>
+			</ul>
+		</nav>
+
+		<!-- Mobile Close Button (Hidden on Desktop) -->
+		<button 
+			onclick="closeMobileSidebar()"
+			class="absolute top-4 right-[-48px] lg:hidden h-10 w-10 flex items-center justify-center rounded-full bg-white text-zinc-900 shadow-md border border-zinc-100 dark:bg-zinc-800 dark:text-white dark:border-zinc-700">
+			<i data-lucide="x" class="h-5 w-5"></i>
+		</button>
+	</aside>
+}
+
+templ sidebarItem(item navigation.Item, currentPath string, index int) {
+	<li class="relative">
+		if len(item.Children) > 0 {
+			<!-- Parent Dropdown Item -->
+			<div>
+				<button 
+					type="button"
+					onclick={ templ.ComponentScript{ Call: fmt.Sprintf("toggleDropdown('dropdown-%d')", index) } }
+					class={ "flex w-full items-center gap-x-3 rounded-xl p-2.5 text-sm font-semibold leading-6 transition-all group", 
+						templ.KV("text-indigo-600 bg-indigo-50 dark:bg-indigo-900/10 dark:text-indigo-400", IsActivePath(currentPath, item)),
+						templ.KV("text-zinc-500 hover:text-indigo-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900", !IsActivePath(currentPath, item)) }>
+					<i data-lucide={ item.Icon } class="h-5 w-5 shrink-0 transition-transform group-hover:scale-110"></i>
+					<span class="sidebar-text truncate flex-1 text-left whitespace-nowrap">
+						{ item.Label }
+					</span>
+					<i data-lucide="chevron-right" 
+						data-dropdown-chevron={ fmt.Sprintf("dropdown-%d", index) }
+						class={ "sidebar-text h-4 w-4 shrink-0 transition-transform duration-200", 
+							templ.KV("rotate-90", IsActivePath(currentPath, item)) }></i>
+				</button>
+				
+				<!-- Sub-items List -->
+				<ul id={ fmt.Sprintf("dropdown-%d", index) } 
+					class={ "mt-1 space-y-1 px-2 overflow-hidden transition-all duration-300", 
+						templ.KV("hidden", !IsActivePath(currentPath, item)) }>
+					for _, child := range item.Children {
+						<li>
+							<a href={ templ.SafeURL(child.Href) } 
+								class={ "flex items-center gap-x-3 rounded-lg p-2 text-sm font-medium transition-all duration-200 group/child", 
+									templ.KV("text-indigo-600 dark:text-indigo-400", IsActive(currentPath, child.Href)),
+									templ.KV("text-zinc-500 hover:text-indigo-600 dark:text-zinc-400 dark:hover:text-white", !IsActive(currentPath, child.Href)) }>
+								<div class={ "h-1.5 w-1.5 rounded-full transition-all duration-200",
+									templ.KV("bg-indigo-600 scale-125 dark:bg-indigo-400", IsActive(currentPath, child.Href)),
+									templ.KV("bg-zinc-300 dark:bg-zinc-700 group-hover/child:bg-indigo-500", !IsActive(currentPath, child.Href)) }></div>
+								<span class="sidebar-text truncate">{ child.Label }</span>
+							</a>
+						</li>
+					}
+				</ul>
+			</div>
+		} else {
+			<!-- Simple Link Item -->
+			<a href={ templ.SafeURL(item.Href) } 
+				class={ "group flex items-center gap-x-3 rounded-xl p-2.5 text-sm font-semibold leading-6 transition-all", 
+					templ.KV("bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400 shadow-sm", IsActive(currentPath, item.Href)),
+					templ.KV("text-zinc-500 hover:text-indigo-600 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-900", !IsActive(currentPath, item.Href)) }>
+				<i data-lucide={ item.Icon } class="h-5 w-5 shrink-0 transition-transform group-hover:scale-110"></i>
+				<span class="sidebar-text truncate whitespace-nowrap">
+					{ item.Label }
+				</span>
+			</a>
+		}
+	</li>
+}
+
+func IsActivePath(currentPath string, item navigation.Item) bool {
+	if IsActive(currentPath, item.Href) && item.Href != "#" {
+		return true
+	}
+	for _, child := range item.Children {
+		if IsActive(currentPath, child.Href) {
+			return true
+		}
+	}
+	return false
+}

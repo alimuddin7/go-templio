@@ -1,0 +1,67 @@
+package {{.PackageName}}svc
+
+import (
+	"context"
+	"fmt"
+
+	"{{.ModulePath}}/internal/domain/{{.PackageName}}"
+)
+
+const (
+	defaultPageSize = 20
+	maxPageSize     = 100
+)
+
+// Service implements {{.PackageName}}.Service.
+type Service struct {
+	repo {{.PackageName}}.Repository
+}
+
+// New creates a Service.
+func New(repo {{.PackageName}}.Repository) *Service { return &Service{repo: repo} }
+
+func (s *Service) GetByID(ctx context.Context, id int64) (*{{.PackageName}}.{{.Name}}, error) {
+	return s.repo.FindByID(ctx, id)
+}
+
+func (s *Service) List(ctx context.Context, page, pageSize int) ([]*{{.PackageName}}.{{.Name}}, int64, error) {
+	if pageSize <= 0 { pageSize = defaultPageSize }
+	if pageSize > maxPageSize { pageSize = maxPageSize }
+	offset := (page - 1) * pageSize
+	if offset < 0 { offset = 0 }
+	return s.repo.List(ctx, offset, pageSize)
+}
+
+func (s *Service) Create(ctx context.Context, in {{.PackageName}}.Create{{.Name}}Input) (*{{.PackageName}}.{{.Name}}, error) {
+	// TODO: add domain validation here
+	e := &{{.PackageName}}.{{.Name}}{
+		{{- range .Fields}}
+		{{.GoName}}: in.{{.GoName}},
+		{{- end}}
+	}
+	if err := s.repo.Create(ctx, e); err != nil {
+		return nil, fmt.Errorf("{{.PackageName}}svc: create: %w", err)
+	}
+	return e, nil
+}
+
+func (s *Service) Update(ctx context.Context, id int64, in {{.PackageName}}.Update{{.Name}}Input) (*{{.PackageName}}.{{.Name}}, error) {
+	e, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	{{- range .Fields}}
+	if in.{{.GoName}} != nil { e.{{.GoName}} = *in.{{.GoName}} }
+	{{- end}}
+	if err := s.repo.Update(ctx, e); err != nil {
+		return nil, fmt.Errorf("{{.PackageName}}svc: update: %w", err)
+	}
+	return e, nil
+}
+
+func (s *Service) Delete(ctx context.Context, id int64) error {
+	if _, err := s.repo.FindByID(ctx, id); err != nil {
+		return err
+	}
+	return s.repo.Delete(ctx, id)
+}

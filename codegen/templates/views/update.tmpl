@@ -1,0 +1,66 @@
+package {{.PackageName}}views
+
+import (
+	"fmt"
+	"{{.ModulePath}}/internal/domain/{{.PackageName}}"
+	"{{.ModulePath}}/internal/navigation"
+	"{{.ModulePath}}/views/layout"
+)
+
+templ Update(item *{{.PackageName}}.{{.Name}}, navItems []navigation.Item, formErr error) {
+	@layout.Base(layout.PageData{
+		Title:       "Edit {{.Name}}",
+		NavItems:    navItems,
+		CurrentPath: "/{{.URLPrefix}}",
+	}) {
+		<div class="page-header">
+			<div class="page-header-left">
+				<a href="/{{.URLPrefix}}" class="btn btn--ghost btn--sm back-btn">
+					<i data-lucide="arrow-left"></i> {{.PluralName}}
+				</a>
+				<h1 class="page-title">Edit {{.Name}}</h1>
+			</div>
+		</div>
+
+		<div class="form-card">
+			if formErr != nil {
+				<div class="alert alert--error" role="alert">
+					<i data-lucide="alert-circle"></i>
+					{ formErr.Error() }
+				</div>
+			}
+
+			<form
+				method="POST"
+				action={ templ.SafeURL(fmt.Sprintf("/{{.URLPrefix}}/%d", item.ID)) }
+				class="form"
+				id="edit-{{.PackageName}}-form"
+				novalidate
+			>
+				<div class="form-section">
+					<h2 class="form-section-title">{{.Name}} Details</h2>
+					<div class="form-grid">
+						{{- range .Fields}}
+						<div class="form-group">
+							<label for="{{.FormName}}" class="form-label">{{.Label}}</label>
+							<input
+								type="{{.InputType}}"
+								id="{{.FormName}}"
+								name="{{.FormName}}"
+								class="input"
+								value={ fmt.Sprintf("%v", item.{{.GoName}}) }
+							/>
+						</div>
+						{{- end}}
+					</div>
+				</div>
+				<div class="form-actions">
+					<a href="/{{.URLPrefix}}" class="btn btn--outline">Cancel</a>
+					<button type="submit" class="btn btn--primary" id="submit-edit-{{.PackageName}}">
+						<i data-lucide="save"></i> Save Changes
+					</button>
+				</div>
+			</form>
+		</div>
+	}
+}
