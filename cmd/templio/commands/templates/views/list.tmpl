@@ -1,0 +1,128 @@
+package {{.PackageName}}views
+
+import (
+	"fmt"
+	"{{.ModulePath}}/internal/domain/{{.PackageName}}"
+	"{{.ModulePath}}/internal/navigation"
+	"{{.ModulePath}}/views/layout"
+	"{{.ModulePath}}/views/components"
+)
+
+templ List(items []*{{.PackageName}}.{{.Name}}, total int64, page, pageSize int, search string, navItems []navigation.Item) {
+	@layout.Base(layout.PageData{
+		Title:       "{{.PluralName}}",
+		NavItems:    navItems,
+		CurrentPath: "/{{.URLPrefix}}",
+	}) {
+		<div class="sm:flex sm:items-center sm:justify-between mb-8">
+			<div>
+				<h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">{{.PluralName}}</h1>
+				<p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+					Manage your {{.PluralName}} content items here.
+				</p>
+			</div>
+			<div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+				<a href="/{{.URLPrefix}}/new" class="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-all active:scale-95">
+					<i data-lucide="plus" class="mr-2 h-4 w-4"></i>
+					New {{.Name}}
+				</a>
+			</div>
+		</div>
+
+		<!-- Filter & Search Bar -->
+		<div class="mb-6 flex flex-col sm:flex-row gap-4 items-end bg-white dark:bg-slate-900 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
+			<form method="GET" action="/{{.URLPrefix}}" class="flex flex-1 gap-4 items-end">
+				<div class="flex-1 max-w-sm">
+					<label for="search" class="block text-xs font-semibold text-slate-500 uppercase mb-1">Search</label>
+					<div class="relative">
+						<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+							<i data-lucide="search" class="h-4 w-4 text-slate-400"></i>
+						</div>
+						<input type="text" name="q" id="search" value={ search }
+							class="block w-full rounded-lg border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 py-2 pl-10 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-colors" 
+							placeholder="Search {{.PluralName}}..."/>
+					</div>
+				</div>
+				<input type="hidden" name="ps" value={ fmt.Sprintf("%d", pageSize) }/>
+				<button type="submit" class="inline-flex items-center rounded-lg bg-white dark:bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-900 dark:text-white shadow-sm ring-1 ring-inset ring-slate-300 dark:ring-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all">
+					Search
+				</button>
+				if search != "" {
+					<a href="/{{.URLPrefix}}" class="text-sm text-slate-500 hover:text-indigo-600 transition-colors py-2 px-2">Clear</a>
+				}
+			</form>
+		</div>
+
+		<!-- Table Card -->
+		<div class="overflow-hidden bg-white dark:bg-slate-900 shadow-sm ring-1 ring-slate-200 dark:ring-slate-800 sm:rounded-xl border border-slate-200 dark:border-slate-800 transition-all duration-300">
+			<div class="overflow-x-auto">
+				<table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+					<thead class="bg-slate-50 dark:bg-slate-800/50">
+						<tr>
+							{{- range .Fields}}
+							<th scope="col" class="py-4 pl-4 pr-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider sm:pl-6">{{.Label}}</th>
+							{{- end}}
+							<th scope="col" class="px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Created</th>
+							<th scope="col" class="relative py-4 pl-3 pr-4 sm:pr-6">
+								<span class="sr-only">Actions</span>
+							</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-slate-200 dark:divide-slate-800 transition-colors">
+						if len(items) == 0 {
+							<tr>
+								<td colspan={ fmt.Sprintf("%d", {{add (len .Fields) 2}}) } class="px-6 py-24 text-center">
+									<div class="flex flex-col items-center">
+										<div class="p-4 rounded-full bg-slate-50 dark:bg-slate-800/50 text-slate-400 mb-4 shadow-inner">
+											<i data-lucide="file-text" class="h-10 w-10"></i>
+										</div>
+										<h3 class="text-sm font-semibold text-slate-900 dark:text-white">No {{.PluralName}} found</h3>
+										<p class="mt-1 text-sm text-slate-500 max-w-xs mx-auto">Try adjusting your search or create a new one.</p>
+										<div class="mt-6">
+											<a href="/{{.URLPrefix}}/new" class="inline-flex items-center rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg shadow-indigo-200 dark:shadow-none hover:bg-indigo-700 active:scale-95 transition-all">
+												Create first {{.Name}}
+											</a>
+										</div>
+									</div>
+								</td>
+							</tr>
+						} else {
+							for _, item := range items {
+								<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+									{{- range .Fields}}
+									<td class="whitespace-nowrap py-5 pl-4 pr-3 sm:pl-6">
+										<div class="flex flex-col">
+											<div class="font-bold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors">
+												{ fmt.Sprintf("%v", item.{{.GoName}}) }
+											</div>
+										</div>
+									</td>
+									{{- end}}
+									<td class="whitespace-nowrap px-3 py-5 text-sm text-slate-500 dark:text-slate-400">
+										{ item.CreatedAt.Format("02 Jan 2006") }
+									</td>
+									<td class="relative whitespace-nowrap py-5 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
+										<div class="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+											<a href={ templ.SafeURL(fmt.Sprintf("/{{.URLPrefix}}/%d/edit", item.ID)) } class="text-slate-400 hover:text-indigo-600 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+												<i data-lucide="pencil" class="h-4 w-4"></i>
+											</a>
+											<form method="POST" action={ templ.SafeURL(fmt.Sprintf("/{{.URLPrefix}}/%d/delete", item.ID)) }
+												onsubmit="return confirm('Delete this item?')">
+												<button type="submit" class="text-slate-400 hover:text-red-600 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors">
+													<i data-lucide="trash-2" class="h-4 w-4"></i>
+												</button>
+											</form>
+										</div>
+									</td>
+								</tr>
+							}
+						}
+					</tbody>
+				</table>
+			</div>
+
+			<!-- Pagination -->
+			@components.Pagination(page, int(total), pageSize, search)
+		</div>
+	}
+}

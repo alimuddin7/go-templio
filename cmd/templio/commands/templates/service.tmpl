@@ -1,0 +1,39 @@
+package {{.PackageName}}svc
+
+import (
+	"context"
+	"{{.ModulePath}}/internal/domain/{{.PackageName}}"
+)
+
+type Service struct {
+	repo {{.PackageName}}.Repository
+}
+
+func New(repo {{.PackageName}}.Repository) *Service {
+	return &Service{repo: repo}
+}
+
+func (s *Service) GetByID(ctx context.Context, id int64) (*{{.PackageName}}.{{.Name}}, error) {
+	return s.repo.FindByID(ctx, id)
+}
+
+func (s *Service) List(ctx context.Context, search string, page, pageSize int) ([]*{{.PackageName}}.{{.Name}}, int64, error) {
+	if pageSize <= 0 { pageSize = 20 }
+	offset := (page - 1) * pageSize
+	return s.repo.List(ctx, search, offset, pageSize)
+}
+
+func (s *Service) Create(ctx context.Context, ent *{{.PackageName}}.{{.Name}}) (*{{.PackageName}}.{{.Name}}, error) {
+	err := s.repo.Create(ctx, ent)
+	return ent, err
+}
+
+func (s *Service) Update(ctx context.Context, id int64, ent *{{.PackageName}}.{{.Name}}) (*{{.PackageName}}.{{.Name}}, error) {
+	ent.ID = id
+	err := s.repo.Update(ctx, ent)
+	return ent, err
+}
+
+func (s *Service) Delete(ctx context.Context, id int64) error {
+	return s.repo.Delete(ctx, id)
+}

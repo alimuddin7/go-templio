@@ -1,0 +1,21 @@
+package {{.PackageName}}
+
+import "context"
+
+// Repository defines the persistence contract for the {{.Name}} aggregate.
+type Repository interface {
+	FindByID(ctx context.Context, id int64) (*{{.Name}}, error)
+	List(ctx context.Context, search string, offset, limit int) ([]*{{.Name}}, int64, error)
+	Create(ctx context.Context, ent *{{.Name}}) error
+	Update(ctx context.Context, ent *{{.Name}}) error
+	Delete(ctx context.Context, id int64) error
+}
+
+// Service defines the business-logic contract.
+type Service interface {
+	GetByID(ctx context.Context, id int64) (*{{.Name}}, error)
+	List(ctx context.Context, search string, page, pageSize int) ([]*{{.Name}}, int64, error)
+	Create(ctx context.Context, ent *{{.Name}}) (*{{.Name}}, error)
+	Update(ctx context.Context, id int64, ent *{{.Name}}) (*{{.Name}}, error)
+	Delete(ctx context.Context, id int64) error
+}

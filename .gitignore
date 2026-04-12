@@ -2,7 +2,7 @@ node_modules
 .env
 .vscode
 .idea
-templio
-templio-server
+/templio
+/templio-server
 tailwindcss-linux-x64
 llm.txt

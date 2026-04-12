@@ -1,0 +1,178 @@
+package {{.PackageName}}views
+
+import (
+	"fmt"
+	"{{.ModulePath}}/internal/domain/{{.PackageName}}"
+	"{{.ModulePath}}/internal/navigation"
+	"{{.ModulePath}}/views/layout"
+	"{{.ModulePath}}/views/components"
+
+	{{- $hasSelectBox := false }}{{ range .Fields }}{{ if eq .Component "SelectBox" }}{{ $hasSelectBox = true }}{{ end }}{{ end }}{{ if $hasSelectBox }}
+	"github.com/templui/templui/components/selectbox"{{ end }}
+	{{- $hasDatePicker := false }}{{ range .Fields }}{{ if eq .Component "DatePicker" }}{{ $hasDatePicker = true }}{{ end }}{{ end }}{{ if $hasDatePicker }}
+	"github.com/templui/templui/components/datepicker"{{ end }}
+	{{- $hasTimePicker := false }}{{ range .Fields }}{{ if eq .Component "TimePicker" }}{{ $hasTimePicker = true }}{{ end }}{{ end }}{{ if $hasTimePicker }}
+	"github.com/templui/templui/components/timepicker"{{ end }}
+	{{- $hasCheckbox := false }}{{ range .Fields }}{{ if eq .Component "Checkbox" }}{{ $hasCheckbox = true }}{{ end }}{{ end }}{{ if $hasCheckbox }}
+	"github.com/templui/templui/components/checkbox"{{ end }}
+	{{- $hasRadio := false }}{{ range .Fields }}{{ if eq .Component "Radio" }}{{ $hasRadio = true }}{{ end }}{{ end }}{{ if $hasRadio }}
+	"github.com/templui/templui/components/radio"{{ end }}
+	{{- $hasSwitch := false }}{{ range .Fields }}{{ if eq .Component "Switch" }}{{ $hasSwitch = true }}{{ end }}{{ end }}{{ if $hasSwitch }}
+	tswitch "github.com/templui/templui/components/switch"{{ end }}
+	{{- $hasRating := false }}{{ range .Fields }}{{ if eq .Component "Rating" }}{{ $hasRating = true }}{{ end }}{{ end }}{{ if $hasRating }}
+	"github.com/templui/templui/components/rating"{{ end }}
+)
+
+templ Update(item *{{.PackageName}}.{{.Name}}, navItems []navigation.Item, formErr error) {
+	@layout.Base(layout.PageData{
+		Title:       fmt.Sprintf("Edit {{.Name}} #%d", item.ID),
+		NavItems:    navItems,
+		CurrentPath: "/{{.URLPrefix}}",
+	}) {
+		<div class="mb-8">
+			<nav class="flex mb-4" aria-label="Back">
+				<a href="/{{.URLPrefix}}" class="flex items-center text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors">
+					<i data-lucide="arrow-left" class="mr-2 h-4 w-4"></i>
+					Back to {{.PluralName}}
+				</a>
+			</nav>
+			<h1 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">Edit {{.Name}}</h1>
+			<p class="mt-2 text-sm text-slate-500 dark:text-slate-400 font-mono">ID #{ fmt.Sprintf("%d", item.ID) }</p>
+		</div>
+
+		<div class="bg-white dark:bg-slate-900/50 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 sm:p-12 transition-all backdrop-blur-sm">
+			if formErr != nil {
+				<div class="mb-6 rounded-lg bg-red-50 dark:bg-red-900/20 p-4 border border-red-100 dark:border-red-900/30">
+					<div class="flex">
+						<div class="flex-shrink-0">
+							<i data-lucide="alert-circle" class="h-5 w-5 text-red-400"></i>
+						</div>
+						<div class="ml-3">
+							<h3 class="text-sm font-medium text-red-800 dark:text-red-400">Submission Error</h3>
+							<div class="mt-2 text-sm text-red-700 dark:text-red-300">
+								<p>{ formErr.Error() }</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			}
+
+			<form method="POST" action={ templ.SafeURL(fmt.Sprintf("/{{.URLPrefix}}/%d", item.ID)) } id="update-{{.Name | lower}}-form" novalidate>
+				@components.FormSection("{{.Name}} Details", "Modify information for this {{.Name | lower}}.") {
+					@components.FormGrid() {
+						{{- range .Fields}}
+						{{- if eq .Component "SelectBox"}}
+						<div class="space-y-1">
+							<label for="{{.FormName}}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{.Label}}</label>
+							@selectbox.SelectBox(selectbox.Props{
+								ID: "{{.FormName}}",
+							}) {
+								@selectbox.Trigger(selectbox.TriggerProps{
+									Name: "{{.FormName}}",
+								}) {
+									@selectbox.Value(selectbox.ValueProps{Placeholder: "{{.Placeholder}}"})
+								}
+								@selectbox.Content(selectbox.ContentProps{}) {
+									{{- $goName := .GoName }}
+									{{- range .Options }}
+									@selectbox.Item(selectbox.ItemProps{
+										Value: "{{.}}",
+										Selected: fmt.Sprintf("%v", item.{{$goName}}) == "{{.}}",
+									}) {
+										{{.}}
+									}
+									{{- end }}
+								}
+							}
+						</div>
+						{{- else if eq .Component "Radio"}}
+						<div class="space-y-2">
+							<label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{.Label}}</label>
+							<div class="flex flex-col gap-2">
+								{{- $name := .FormName }}
+								{{- $goName := .GoName }}
+								{{- range .Options }}
+								<div class="flex items-center space-x-2">
+									@radio.Radio(radio.Props{
+										ID: "{{$name}}-{{.}}",
+										Name: "{{$name}}",
+										Value: "{{.}}",
+										Checked: fmt.Sprintf("%v", item.{{$goName}}) == "{{.}}",
+									})
+									<label for="{{$name}}-{{.}}" class="text-sm font-medium leading-none">{{.}}</label>
+								</div>
+								{{- end }}
+							</div>
+						</div>
+						{{- else if eq .Component "Switch"}}
+						<div class="flex items-center space-x-2 py-4">
+							@tswitch.Switch(tswitch.Props{
+								ID: "{{.FormName}}",
+								Name: "{{.FormName}}",
+								Value: "true",
+								Checked: fmt.Sprintf("%v", item.{{.GoName}}) == "true",
+							})
+							<label for="{{.FormName}}" class="text-sm font-medium leading-none">{{.Label}}</label>
+						</div>
+						{{- else if eq .Component "Checkbox"}}
+						<div class="flex items-center space-x-2 py-4">
+							@checkbox.Checkbox(checkbox.Props{
+								ID: "{{.FormName}}",
+								Name: "{{.FormName}}",
+								Value: "true",
+								Checked: fmt.Sprintf("%v", item.{{.GoName}}) == "true",
+							})
+							<label for="{{.FormName}}" class="text-sm font-medium leading-none">{{.Label}}</label>
+						</div>
+						{{- else if eq .Component "DatePicker"}}
+						<div class="space-y-1">
+							<label for="{{.FormName}}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{.Label}}</label>
+							@datepicker.DatePicker(datepicker.Props{
+								ID: "{{.FormName}}",
+								Name: "{{.FormName}}",
+								Value: fmt.Sprintf("%v", item.{{.GoName}}),
+							})
+						</div>
+						{{- else if eq .Component "TimePicker"}}
+						<div class="space-y-1">
+							<label for="{{.FormName}}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{.Label}}</label>
+							@timepicker.TimePicker(timepicker.Props{
+								ID: "{{.FormName}}",
+								Name: "{{.FormName}}",
+								Value: fmt.Sprintf("%v", item.{{.GoName}}),
+							})
+						</div>
+						{{- else if eq .Component "Rating"}}
+						<div class="space-y-1">
+							<label for="{{.FormName}}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{.Label}}</label>
+							@rating.Rating(rating.Props{
+								ID: "{{.FormName}}",
+								Name: "{{.FormName}}",
+								Value: fmt.Sprintf("%v", item.{{.GoName}}),
+							})
+						</div>
+						{{- else}}
+						@components.{{.Component}}(components.{{.Component}}Props{
+							Label: "{{.Label}}",
+							Name:  "{{.FormName}}",
+							{{- if eq .Component "Input"}}
+							Type:  "{{.InputType}}",
+							{{- end}}
+							Value: fmt.Sprintf("%v", item.{{.GoName}}),
+							Placeholder: "{{.Placeholder}}",
+						})
+						{{- end}}
+						{{- end}}
+					}
+				}
+
+				<div class="mt-10 flex items-center justify-end gap-x-6 border-t border-slate-200 dark:border-slate-800 pt-8">
+					<a href="/{{.URLPrefix}}" class="text-sm font-semibold leading-6 text-slate-900 dark:text-slate-300 hover:text-indigo-600 transition-colors">Cancel</a>
+					<button type="submit" class="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 active:scale-95 transition-all">
+						Save Changes
+					</button>
+				</div>
+			</form>
+		</div>
+	}
+}

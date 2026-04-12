@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS {{.TableName}} (
+    id BIGSERIAL PRIMARY KEY,
+    {{- range .Fields }}
+    {{- if ne .GoName "ID" }}
+    {{ .ColumnName }} VARCHAR,
+    {{- end }}
+    {{- end }}
+    created_at TIMESTAMPTZ DEFAULT current_timestamp,
+    updated_at TIMESTAMPTZ DEFAULT current_timestamp
+);
