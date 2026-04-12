@@ -10,7 +10,7 @@ import (
 
 	"github.com/uptrace/bun"
 
-	"templio.local/cms/internal/domain/user"
+	"github.com/alimuddin7/go-templio/internal/domain/user"
 )
 
 // userModel is the Bun ORM model. It is PRIVATE — the repository translates

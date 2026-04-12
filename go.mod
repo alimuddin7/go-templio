@@ -1,4 +1,4 @@
-module templio.local/cms
+module github.com/alimuddin7/go-templio
 
 go 1.25.0
 

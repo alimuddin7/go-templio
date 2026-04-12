@@ -12,7 +12,7 @@ import (
 	"github.com/uptrace/bun/driver/sqliteshim"
 	"github.com/uptrace/bun/extra/bundebug"
 
-	"templio.local/cms/internal/config"
+	"github.com/alimuddin7/go-templio/internal/config"
 )
 
 // Database wraps a *bun.DB and exposes lifecycle helpers.

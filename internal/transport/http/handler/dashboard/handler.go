@@ -2,10 +2,10 @@ package dashboardhandler
 
 import (
 	"github.com/gofiber/fiber/v3"
-	"templio.local/cms/internal/engine"
-	"templio.local/cms/internal/navigation"
-	"templio.local/cms/views/dashboard"
-	"templio.local/cms/views/layout"
+	"github.com/alimuddin7/go-templio/internal/engine"
+	"github.com/alimuddin7/go-templio/internal/navigation"
+	"github.com/alimuddin7/go-templio/views/dashboard"
+	"github.com/alimuddin7/go-templio/views/layout"
 )
 
 type Handler struct {

@@ -8,10 +8,10 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 
-	"templio.local/cms/internal/domain/user"
-	"templio.local/cms/internal/engine"
-	"templio.local/cms/internal/navigation"
-	userviews "templio.local/cms/views/user"
+	"github.com/alimuddin7/go-templio/internal/domain/user"
+	"github.com/alimuddin7/go-templio/internal/engine"
+	"github.com/alimuddin7/go-templio/internal/navigation"
+	userviews "github.com/alimuddin7/go-templio/views/user"
 )
 
 // Handler holds dependencies for the user HTTP layer.

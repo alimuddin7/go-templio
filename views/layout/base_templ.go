@@ -9,12 +9,12 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
+	"github.com/alimuddin7/go-templio/internal/navigation"
 	"github.com/templui/templui/components/checkbox"
 	"github.com/templui/templui/components/datepicker"
 	"github.com/templui/templui/components/rating"
 	"github.com/templui/templui/components/selectbox"
 	"github.com/templui/templui/components/timepicker"
-	"templio.local/cms/internal/navigation"
 )
 
 // PageData holds common data needed by every page layout.

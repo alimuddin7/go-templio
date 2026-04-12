@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"templio.local/cms/internal/config"
-	"templio.local/cms/internal/database/migrations"
-	"templio.local/cms/internal/engine"
+	"github.com/alimuddin7/go-templio/internal/config"
+	"github.com/alimuddin7/go-templio/internal/database/migrations"
+	"github.com/alimuddin7/go-templio/internal/engine"
 
 	"github.com/uptrace/bun/migrate"
 )

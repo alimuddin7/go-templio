@@ -7,10 +7,10 @@ import (
 	"github.com/gofiber/fiber/v3"
 	"golang.org/x/crypto/bcrypt"
 
-	"templio.local/cms/internal/auth"
-	"templio.local/cms/internal/domain/user"
-	"templio.local/cms/internal/engine"
-	authviews "templio.local/cms/views/auth"
+	"github.com/alimuddin7/go-templio/internal/auth"
+	"github.com/alimuddin7/go-templio/internal/domain/user"
+	"github.com/alimuddin7/go-templio/internal/engine"
+	authviews "github.com/alimuddin7/go-templio/views/auth"
 )
 
 const cookieName = "templio_token"

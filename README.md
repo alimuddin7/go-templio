@@ -31,7 +31,11 @@ Ensure you have the following installed:
 - [Make](https://www.gnu.org/software/make/)
 
 ### 2. Install the CLI (The Compiler)
-To use the scaffolding tool globally, install it directly from the project root:
+To install the scaffolding tool globally via GitHub:
+```bash
+go install github.com/alimuddin7/go-templio/cmd/templio@latest
+```
+Alternatively, install it locally from the project root:
 ```bash
 go install ./cmd/templio
 ```

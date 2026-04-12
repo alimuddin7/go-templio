@@ -9,9 +9,9 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"templio.local/cms/internal/navigation"
-	"templio.local/cms/views/components"
-	"templio.local/cms/views/layout"
+	"github.com/alimuddin7/go-templio/internal/navigation"
+	"github.com/alimuddin7/go-templio/views/components"
+	"github.com/alimuddin7/go-templio/views/layout"
 )
 
 func Create(navItems []navigation.Item, formErr error) templ.Component {

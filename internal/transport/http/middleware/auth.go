@@ -7,7 +7,7 @@ import (
 
 	"github.com/gofiber/fiber/v3"
 
-	"templio.local/cms/internal/auth"
+	"github.com/alimuddin7/go-templio/internal/auth"
 )
 
 const (

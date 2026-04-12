@@ -13,20 +13,20 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	bunmigrate "github.com/uptrace/bun/migrate"
 
-	"templio.local/cms/internal/database/migrations"
-	"templio.local/cms/internal/auth"
-	"templio.local/cms/internal/config"
-	"templio.local/cms/internal/domain/user"
-	"templio.local/cms/internal/engine"
-	"templio.local/cms/internal/navigation"
-	"templio.local/cms/internal/transport/http/middleware"
+	"github.com/alimuddin7/go-templio/internal/database/migrations"
+	"github.com/alimuddin7/go-templio/internal/auth"
+	"github.com/alimuddin7/go-templio/internal/config"
+	"github.com/alimuddin7/go-templio/internal/domain/user"
+	"github.com/alimuddin7/go-templio/internal/engine"
+	"github.com/alimuddin7/go-templio/internal/navigation"
+	"github.com/alimuddin7/go-templio/internal/transport/http/middleware"
 
-	"templio.local/cms/internal/repository/user"
-	usersvc "templio.local/cms/internal/service/user"
-	userhandler "templio.local/cms/internal/transport/http/handler/user"
+	"github.com/alimuddin7/go-templio/internal/repository/user"
+	usersvc "github.com/alimuddin7/go-templio/internal/service/user"
+	userhandler "github.com/alimuddin7/go-templio/internal/transport/http/handler/user"
 
-	authhandler "templio.local/cms/internal/transport/http/handler/auth"
-	dashboardhandler "templio.local/cms/internal/transport/http/handler/dashboard"
+	authhandler "github.com/alimuddin7/go-templio/internal/transport/http/handler/auth"
+	dashboardhandler "github.com/alimuddin7/go-templio/internal/transport/http/handler/dashboard"
 	// [GEN-IMPORT]
 )
 

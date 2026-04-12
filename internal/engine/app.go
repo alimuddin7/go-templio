@@ -14,8 +14,8 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/static"
 	"github.com/templui/templui/utils"
 
-	"templio.local/cms/internal/config"
-	"templio.local/cms/internal/navigation"
+	"github.com/alimuddin7/go-templio/internal/config"
+	"github.com/alimuddin7/go-templio/internal/navigation"
 )
 
 // Module is a function that registers routes and navigation items

@@ -10,10 +10,10 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
-	"templio.local/cms/internal/domain/user"
-	"templio.local/cms/internal/navigation"
-	"templio.local/cms/views/components"
-	"templio.local/cms/views/layout"
+	"github.com/alimuddin7/go-templio/internal/domain/user"
+	"github.com/alimuddin7/go-templio/internal/navigation"
+	"github.com/alimuddin7/go-templio/views/components"
+	"github.com/alimuddin7/go-templio/views/layout"
 )
 
 func Update(u *user.User, navItems []navigation.Item, formErr error) templ.Component {

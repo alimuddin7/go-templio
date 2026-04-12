@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/crypto/bcrypt"
 
-	"templio.local/cms/internal/domain/user"
+	"github.com/alimuddin7/go-templio/internal/domain/user"
 )
 
 const (

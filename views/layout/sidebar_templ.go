@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
-	"templio.local/cms/internal/navigation"
+	"github.com/alimuddin7/go-templio/internal/navigation"
 )
 
 func Sidebar(data PageData) templ.Component {
