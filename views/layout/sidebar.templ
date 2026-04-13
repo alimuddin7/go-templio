@@ -13,9 +13,17 @@ templ Sidebar(data PageData) {
 		<div class="flex h-16 shrink-0 items-center border-b border-zinc-200 dark:border-zinc-800 px-6">
 			<a href="/" class="flex items-center gap-3 group">
 				<div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-500/30 group-hover:scale-105 transition-transform duration-200">
-					<i data-lucide="layers" class="h-5 w-5"></i>
+					if logo, ok := ctx.Value("AppLogo").(string); ok && logo != "" {
+						<i data-lucide={ logo } class="h-5 w-5"></i>
+					} else {
+						<i data-lucide="layers" class="h-5 w-5"></i>
+					}
 				</div>
-				<span class="sidebar-text text-xl font-bold tracking-tight text-zinc-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors whitespace-nowrap">templio</span>
+				if name, ok := ctx.Value("AppName").(string); ok && name != "" {
+					<span class="sidebar-text text-xl font-bold tracking-tight text-zinc-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors whitespace-nowrap">{ name }</span>
+				} else {
+					<span class="sidebar-text text-xl font-bold tracking-tight text-zinc-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors whitespace-nowrap">templio</span>
+				}
 			</a>
 		</div>
 

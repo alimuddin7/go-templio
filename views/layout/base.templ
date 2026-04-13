@@ -25,7 +25,11 @@ templ Base(data PageData) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<meta name="description" content="go-templio CMS — modular content management engine"/>
-			<title>{ data.Title } — go-templio</title>
+			if name, ok := ctx.Value("AppName").(string); ok && name != "" {
+				<title>{ data.Title } — { name }</title>
+			} else {
+				<title>{ data.Title } — go-templio</title>
+			}
 
 			<!-- Google Fonts: Inter -->
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>

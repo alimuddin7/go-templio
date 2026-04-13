@@ -3,6 +3,7 @@
 package engine
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -47,6 +48,13 @@ func New(cfg *config.Config, db *Database, nav *navigation.Registry) *App {
 	f.Use(recover.New())
 	f.Use(requestid.New())
 	f.Use(cors.New())
+
+	// Inject App configuration into locals
+	f.Use(func(c fiber.Ctx) error {
+		c.Locals("AppName", cfg.App.Name)
+		c.Locals("AppLogo", cfg.App.Logo)
+		return c.Next()
+	})
 
 	// Configure templui JS component scripts to be served from static directory
 	utils.ScriptURL = func(path string) string {
@@ -98,7 +106,12 @@ func Render(c fiber.Ctx, component templ.Component, status ...int) error {
 	}
 	c.Set(fiber.HeaderContentType, fiber.MIMETextHTMLCharsetUTF8)
 	c.Status(code)
-	return component.Render(c.Context(), c.Response().BodyWriter())
+
+	// Wrap context with app variables
+	ctx := context.WithValue(c.Context(), "AppName", c.Locals("AppName"))
+	ctx = context.WithValue(ctx, "AppLogo", c.Locals("AppLogo"))
+
+	return component.Render(ctx, c.Response().BodyWriter())
 }
 
 // ── Error handler ────────────────────────────────────────────────────────────

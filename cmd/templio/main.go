@@ -18,7 +18,10 @@ func main() {
 		Long: `templio is the code-generation tool for the go-templio CMS engine.
 
 It reads Go struct definitions and scaffolds full CRUD modules:
-entity, repository, service, HTTP handler, and Templ views.`,
+entity, repository, service, HTTP handler, and Templ views.
+
+Tip: You can customize your UI's Name and Logo by editing
+APP_NAME and APP_LOGO in your project's .env file.`,
 		SilenceUsage: true,
 	}
 

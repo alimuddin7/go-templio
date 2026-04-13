@@ -13,6 +13,8 @@ import (
 // InitCmd returns the init cobra command.
 func InitCmd() *cobra.Command {
 	var modulePath string
+	var isLocal bool
+	var sourcePath string
 
 	cmd := &cobra.Command{
 		Use:   "init [project-name]",
@@ -20,8 +22,13 @@ func InitCmd() *cobra.Command {
 		Long: `Initializes a new project by cloning the go-templio boilerplate,
 removing the .git history, and renaming the Go module.
 
+It also prepares an initial .env.example. You can customize the 
+dashboard's UI Name and Logo by setting APP_NAME and APP_LOGO in your .env!
+
 Example:
-  templio init my-new-app --module github.com/myuser/my-app`,
+  templio init my-new-app --module github.com/myuser/my-app
+  templio init my-new-app --local                       # Current folder as source
+  templio init my-new-app --local --source ~/code/cms  # Custom folder as source`,
 		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			projectName := args[0]
@@ -31,11 +38,26 @@ Example:
 
 			// 1. Clone the boilerplate
 			fmt.Printf("💠 Initializing project %q...\n", projectName)
-			fmt.Println("🚀 Cloning boilerplate from GitHub...")
-			cloneCmd := exec.Command("git", "clone", "https://github.com/alimuddin7/go-templio.git", projectName)
+			
+			var cloneCmd *exec.Cmd
+			if isLocal {
+				src := "."
+				if sourcePath != "" {
+					src = sourcePath
+				}
+				fmt.Printf("🏠 Using local source: %s\n", src)
+				cloneCmd = exec.Command("git", "clone", src, projectName)
+			} else {
+				fmt.Println("🚀 Cloning boilerplate from GitHub...")
+				cloneCmd = exec.Command("git", "clone", "https://github.com/alimuddin7/go-templio.git", projectName)
+			}
+			
 			cloneCmd.Stdout = os.Stdout
 			cloneCmd.Stderr = os.Stderr
 			if err := cloneCmd.Run(); err != nil {
+				if isLocal && sourcePath == "" {
+					return fmt.Errorf("local clone failed. Are you in the go-templio directory? If not, use --source flag")
+				}
 				return fmt.Errorf("failed to clone repository: %w", err)
 			}
 
@@ -69,6 +91,8 @@ Example:
 	}
 
 	cmd.Flags().StringVarP(&modulePath, "module", "m", "", "Go module path (defaults to project name)")
+	cmd.Flags().BoolVarP(&isLocal, "local", "l", false, "Use local directory as the boilerplate source (for testing)")
+	cmd.Flags().StringVarP(&sourcePath, "source", "s", "", "Local path to the go-templio boilerplate")
 
 	return cmd
 }

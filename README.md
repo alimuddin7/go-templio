@@ -143,10 +143,33 @@ If you need to add or change fields in an existing module (e.g., adding a `conte
    ```go
    // Inside createForm handler
    categories, _ := h.categorySvc.List(c.Context(), "", 1, 100)
-   return engine.Render(c, postviews.Create(h.nav.Items(), categories))
+   return engine.Render(c, postviews.Create(h.nav.Items(), categories, nil))
    ```
 
+### 1-to-Many (Parent fetching Children)
 
+If you have a `Department` parent that has many `Employee`s (using `DepartmentID`), and you want to fetch and display the employees on the Department's Detail/Edit page:
+
+1. **Add `Employees` to `Department` Struct**:
+   ```go
+   type Department struct {
+       ID        int64
+       Name      string
+       Employees []Employee `bun:"rel:has-many,join:id=department_id"`
+       CreatedAt time.Time
+   }
+   ```
+2. **Fetch With Relation in Repository**:
+   In `internal/repository/department/repository.go`:
+   ```go
+   func (r *Repository) GetByID(ctx context.Context, id int64) (*department.Department, error) {
+       ent := new(department.Department)
+       err := r.db.NewSelect().Model(ent).Relation("Employees").Where("id = ?", id).Scan(ctx)
+       return ent, err
+   }
+   ```
+3. **Display in the View**:
+   In `views/department/update.templ`, iterate over `item.Employees` to render a child list table or component.
 ---
 
 ## 📝 Project Commands

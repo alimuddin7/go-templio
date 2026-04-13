@@ -21,6 +21,8 @@ type Config struct {
 
 // AppConfig holds HTTP server settings.
 type AppConfig struct {
+	Name    string
+	Logo    string
 	Env     string
 	Port    string
 	Prefork bool
@@ -65,6 +67,8 @@ func Load(envFile string) (*Config, error) {
 
 	cfg := &Config{
 		App: AppConfig{
+			Name:    getEnvOrDefault("APP_NAME", "go-templio"),
+			Logo:    getEnvOrDefault("APP_LOGO", "layers"),
 			Env:     getEnvOrDefault("APP_ENV", "development"),
 			Port:    getEnvOrDefault("APP_PORT", "3000"),
 			Prefork: parseBool(os.Getenv("APP_PREFORK")),
