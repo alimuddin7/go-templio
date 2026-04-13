@@ -61,6 +61,10 @@ The app will be available at `http://localhost:3000`.
 
 ---
 
+## 📂 Usage (Scaffolding a Resource)
+
+**go-templio** is designed to grow with your needs. You can generate a full feature set (CRUD) for any resource instantly.
+
 ### 1. Initialize a New Project
 Create a new project by cloning the boilerplate and renaming the module:
 ```bash
@@ -72,26 +76,76 @@ templio init my-app --module github.com/username/my-app
 ```
 
 ### 2. Scaffold a Resource
-**go-templio** is designed to grow with your needs. You can generate a full feature set (CRUD) for any resource instantly.
-
-#### Example: Generate a "Post" Module
 ```bash
 # Define your resource name
 templio generate-resource --name=Post
 ```
 
-This will automatically create:
-- `internal/domain/post/` (Entity & Ports)
-- `internal/repository/post/` (Bun Repository)
-- `internal/service/post/` (Business Logic)
-- `internal/transport/http/handler/post/` (Fiber Handler)
-- `views/post/` (Templ List, Create, & Update pages)
-- `internal/database/migrations/` (SQL Up/Down migrations)
+---
 
-Then, simply run:
-```bash
-make generate build-css
+## 🗺️ Navigation & Sub-menus
+
+You can easily organize your sidebar with sub-menus by editing `navigation.yaml`.
+
+### Sub-menu Sample
+```yaml
+- label: CMS Content
+  icon: folder
+  href: "#"
+  order: 3
+  children:
+    - label: Posts
+      href: /posts
+    - label: Categories
+      href: /categories
 ```
+*Note: Set `href: "#"` for parent items that only serve as dropdown toggles.*
+
+---
+
+## 🛠️ Modifying Existing Resources
+
+If you need to add or change fields in an existing module (e.g., adding a `content` field to `Post`):
+
+1. **Update Domain Struct**: Open `internal/domain/post/entity.go` and add the field.
+2. **Create Migration**: 
+   ```bash
+   make migrate-create name=add_content_to_posts
+   ```
+   In the new `.up.sql` file, add: `ALTER TABLE posts ADD COLUMN content TEXT;`.
+3. **Update Repository**: Update the SQL queries in `internal/repository/post/repository.go`.
+4. **Update Views**: Add the new field's input in `views/post/create.templ` and `update.templ`.
+5. **Re-generate**: Run `make generate build-css`.
+
+---
+
+## 🔗 Handling Table Relations
+
+**go-templio** intelligently detects relationship patterns. If your struct contains a field ending in `ID` (e.g., `CategoryID`), it will automatically generate a **SelectBox** component.
+
+### Relation Sample (Category -> Post)
+
+1. **Scaffold Category first**:
+   ```bash
+   templio generate-resource --name=Category
+   ```
+2. **Define Post with CategoryID**:
+   ```go
+   type Post struct {
+       ID         int64
+       Title      string
+       CategoryID int64 `templ:"type:select"` // Generator will pick this up
+       CreatedAt  time.Time
+   }
+   ```
+3. **Manual Wire-up in Handler**:
+   In `internal/transport/http/handler/post/handler.go`, fetch the categories and pass them to the view:
+   ```go
+   // Inside createForm handler
+   categories, _ := h.categorySvc.List(c.Context(), "", 1, 100)
+   return engine.Render(c, postviews.Create(h.nav.Items(), categories))
+   ```
+
 
 ---
 

@@ -10,6 +10,17 @@ import (
 	{{.PackageName}}views "{{.ModulePath}}/views/{{.PackageName}}"
 )
 
+// TODO: If you have relations, add the related service here:
+// type Handler struct {
+// 	svc {{.PackageName}}.Service
+// 	categorySvc category.Service
+// 	nav *navigation.Registry
+// }
+//
+// func New(svc {{.PackageName}}.Service, categorySvc category.Service, nav *navigation.Registry) *Handler {
+// 	return &Handler{svc: svc, categorySvc: categorySvc, nav: nav}
+// }
+
 type Handler struct {
 	svc {{.PackageName}}.Service
 	nav *navigation.Registry

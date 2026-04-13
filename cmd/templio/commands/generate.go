@@ -45,6 +45,7 @@ type ResourceDef struct {
 	Force       bool        // Overwrite existing files
 	StructFile  string      // Path to original struct file (to prevent overwriting itself)
 	Fields      []FieldDef
+	HasRelation bool        // True if any field is a relation (ends in ID)
 }
 
 // GenerateResourceCmd returns the generate-resource cobra command.
@@ -107,6 +108,14 @@ Examples:
 						InputType: "text",
 						Component: "Input",
 					},
+				}
+			}
+			
+			// Detect if there are relations
+			for _, f := range def.Fields {
+				if f.Component == "SelectBox" && strings.HasSuffix(f.GoName, "ID") {
+					def.HasRelation = true
+					break
 				}
 			}
 
@@ -346,7 +355,7 @@ func parseStructFields(filePath, structName string) ([]FieldDef, error) {
 				}
 				goType := exprToString(field.Type)
 				col := toSnake(goName)
-				inputType, component, options := goTypeToInputAndComponent(goType, field.Tag)
+				inputType, component, options := goTypeToInputAndComponent(goName, goType, field.Tag)
 				fields = append(fields, FieldDef{
 					GoName:      goName,
 					GoType:      goType,
@@ -424,7 +433,7 @@ func parseTemplTag(tagVal string) (string, []string) {
 	return component, options
 }
 
-func goTypeToInputAndComponent(goType string, tag *ast.BasicLit) (string, string, []string) {
+func goTypeToInputAndComponent(goName, goType string, tag *ast.BasicLit) (string, string, []string) {
 	var component string
 	var options []string
 
@@ -450,6 +459,10 @@ func goTypeToInputAndComponent(goType string, tag *ast.BasicLit) (string, string
 	}
 
 	// 2. Default inference
+	if strings.HasSuffix(goName, "ID") && goName != "ID" {
+		return "text", "SelectBox", nil
+	}
+
 	switch goType {
 	case "int", "int64", "int32", "float64":
 		return "number", "Input", nil
