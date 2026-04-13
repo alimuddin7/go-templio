@@ -37,6 +37,7 @@ migrate-init:
 .PHONY: migrate
 migrate:
 	@echo "🗄️ Running migrations up..."
+	@go run ./cmd/migrate/main.go init 2>/dev/null || true
 	go run ./cmd/migrate/main.go up
 
 .PHONY: migrate-down

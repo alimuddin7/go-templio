@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"strings"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect/pgdialect"
@@ -31,10 +32,21 @@ func NewDatabase(cfg config.DatabaseConfig, debug bool) (*Database, error) {
 	switch cfg.Driver {
 	case "sqlite":
 		var err error
-		sqldb, err = sql.Open(sqliteshim.ShimName, cfg.DSN)
+		// Enable foreign keys and set busy timeout
+		dsn := cfg.DSN
+		if !strings.Contains(dsn, "?") {
+			dsn += "?_foreign_keys=1&_busy_timeout=5000"
+		} else if !strings.Contains(dsn, "_foreign_keys") {
+			dsn += "&_foreign_keys=1&_busy_timeout=5000"
+		}
+
+		sqldb, err = sql.Open(sqliteshim.ShimName, dsn)
 		if err != nil {
 			return nil, fmt.Errorf("database: open sqlite: %w", err)
 		}
+		// SQLite only supports one writer at a time.
+		sqldb.SetMaxOpenConns(1)
+
 		bundb = bun.NewDB(sqldb, sqlitedialect.New())
 
 	case "postgres":
