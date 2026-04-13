@@ -23,6 +23,7 @@ entity, repository, service, HTTP handler, and Templ views.`,
 	}
 
 	root.AddCommand(commands.GenerateResourceCmd())
+	root.AddCommand(commands.InitCmd())
 
 	if err := root.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)

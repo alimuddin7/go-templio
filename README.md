@@ -61,11 +61,20 @@ The app will be available at `http://localhost:3000`.
 
 ---
 
-## 📂 Usage (Scaffolding a Resource)
+### 1. Initialize a New Project
+Create a new project by cloning the boilerplate and renaming the module:
+```bash
+# Initialize with project name (module name defaults to project name)
+templio init my-awesome-project
 
+# Initialize with custom module name
+templio init my-app --module github.com/username/my-app
+```
+
+### 2. Scaffold a Resource
 **go-templio** is designed to grow with your needs. You can generate a full feature set (CRUD) for any resource instantly.
 
-### Example: Generate a "Post" Module
+#### Example: Generate a "Post" Module
 ```bash
 # Define your resource name
 templio generate-resource --name=Post
