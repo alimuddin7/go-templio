@@ -4,5 +4,7 @@ node_modules
 .idea
 /templio
 /templio-server
-tailwindcss-linux-x64
+tailwindcss-*
+*.db
+*.db-journal
 llm.txt

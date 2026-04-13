@@ -1,3 +1,15 @@
+# ── Platform Detection ────────────────────────────────────────────────────────
+OS := $(shell uname -s | tr '[:upper:]' '[:lower:]')
+ARCH := $(shell uname -m)
+ifeq ($(ARCH),x86_64)
+	ARCH := x64
+endif
+TAILWIND_OS := $(OS)
+ifeq ($(OS),darwin)
+	TAILWIND_OS := macos
+endif
+TAILWIND_BIN := ./tailwindcss-$(TAILWIND_OS)-$(ARCH)
+
 # ── Project Configuration ─────────────────────────────────────────────────────
 BINARY_NAME=templio-server
 CLI_NAME=templio
@@ -8,15 +20,24 @@ TEMPL_VER=latest
 .PHONY: all
 all: generate build
 
+.PHONY: download-tailwind
+download-tailwind:
+	@if [ ! -f $(TAILWIND_BIN) ]; then \
+		echo "📦 Downloading Tailwind CLI for $(TAILWIND_OS)-$(ARCH)..."; \
+		curl -sLO https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-$(TAILWIND_OS)-$(ARCH); \
+		mv tailwindcss-$(TAILWIND_OS)-$(ARCH) $(TAILWIND_BIN); \
+		chmod +x $(TAILWIND_BIN); \
+	fi
+
 .PHONY: generate
 generate:
 	@echo "🎨 Generating Templ views..."
 	go run github.com/a-h/templ/cmd/templ@v0.3.1001 generate views
 
 .PHONY: build-css
-build-css:
+build-css: download-tailwind
 	@echo "💅 Building Tailwind CSS..."
-	./tailwindcss-linux-x64 -i ./static/css/tailwind-input.css -o ./static/css/tailwind.css
+	$(TAILWIND_BIN) -i ./static/css/tailwind-input.css -o ./static/css/tailwind.css
 
 .PHONY: build
 build: build-css generate
@@ -67,7 +88,7 @@ clean:
 	@echo "🧹 Cleaning up..."
 	rm -f $(BINARY_NAME) $(CLI_NAME)
 	rm -f static/css/tailwind.css
-	rm -f static/css/tailwind.css
+	rm -f tailwindcss-*
 	find . -name "*_templ.go" -delete
 	find . -name "*_templ.txt" -delete
 
