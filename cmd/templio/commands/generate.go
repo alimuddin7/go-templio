@@ -9,43 +9,56 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
 	"time"
 	"unicode"
 
-	"gopkg.in/yaml.v3"
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v3"
 )
 
 //go:embed templates
 var templateFS embed.FS
 
+type RelationType string
+
+const (
+	RelNone      RelationType = ""
+	RelBelongsTo RelationType = "belongs-to"
+	RelHasMany   RelationType = "has-many"
+	RelHasOne    RelationType = "has-one"
+)
+
 // FieldDef describes a single struct field parsed from Go source.
 type FieldDef struct {
-	GoName      string // e.g. "FirstName"
-	GoType      string // e.g. "string"
-	ColumnName  string // e.g. "first_name"
-	Label       string // e.g. "First Name"
-	FormName    string // e.g. "first_name"
-	Placeholder string // e.g. "Enter first name"
-	InputType   string // html input type: "text", "email", "number", etc.
-	Component   string // UI component: "Input", "Textarea", "DatePicker", etc.
-	Options     []string // For Select, Radio, etc.
+	GoName       string       // e.g. "FirstName"
+	GoType       string       // e.g. "string"
+	ColumnName   string       // e.g. "first_name"
+	Label        string       // e.g. "First Name"
+	FormName     string       // e.g. "first_name"
+	Placeholder  string       // e.g. "Enter first name"
+	InputType    string       // html input type: "text", "email", "number", etc.
+	Component    string       // UI component: "Input", "Textarea", "DatePicker", etc.
+	Options      []string     // For Select, Radio, etc.
+	Relation     RelationType // Relation type
+	RelationName string       // Name of the related model (e.g. "Category")
 }
 
 // ResourceDef is the data fed into all code generation templates.
 type ResourceDef struct {
-	ModulePath  string      // go.mod module path
-	Name        string      // e.g. "Post"
-	PackageName string      // e.g. "post"
-	PluralName  string      // e.g. "Posts"
-	TableName   string      // e.g. "posts"
-	URLPrefix   string      // e.g. "posts"
-	Force       bool        // Overwrite existing files
-	StructFile  string      // Path to original struct file (to prevent overwriting itself)
+	ModulePath  string // go.mod module path
+	Name        string // e.g. "Post"
+	PackageName string // e.g. "post"
+	PluralName  string // e.g. "Posts"
+	TableName   string // e.g. "posts"
+	URLPrefix   string // e.g. "posts"
+	Force       bool   // Overwrite existing files
+	StructFile  string // Path to original struct file (to prevent overwriting itself)
 	Fields      []FieldDef
-	HasRelation bool        // True if any field is a relation (ends in ID)
+	HasRelation bool   // True if any field is a relation (ends in ID)
+	Only        string // Selective regeneration: "views", "handler", etc.
 }
 
 // GenerateResourceCmd returns the generate-resource cobra command.
@@ -55,6 +68,7 @@ func GenerateResourceCmd() *cobra.Command {
 		structFile string
 		modulePath string
 		force      bool
+		only       string
 	)
 
 	cmd := &cobra.Command{
@@ -89,6 +103,7 @@ Examples:
 				URLPrefix:   toSnake(plural(name)),
 				Force:       force,
 				StructFile:  structFile,
+				Only:        only,
 			}
 
 			// Parse struct fields if a file is provided.
@@ -98,6 +113,12 @@ Examples:
 					return fmt.Errorf("parse struct: %w", err)
 				}
 				def.Fields = fields
+				for _, f := range fields {
+					if f.Relation != RelNone {
+						def.HasRelation = true
+						break
+					}
+				}
 			} else {
 				// Default scaffold with a title field.
 				def.Fields = []FieldDef{
@@ -110,7 +131,7 @@ Examples:
 					},
 				}
 			}
-			
+
 			// Detect if there are relations
 			for _, f := range def.Fields {
 				if f.Component == "SelectBox" && strings.HasSuffix(f.GoName, "ID") {
@@ -127,6 +148,7 @@ Examples:
 	cmd.Flags().StringVarP(&structFile, "struct", "s", "", "Path to Go file containing the struct definition")
 	cmd.Flags().StringVarP(&modulePath, "module", "m", "", "Go module path (auto-detected from go.mod if omitted)")
 	cmd.Flags().BoolVarP(&force, "force", "f", false, "Overwrite existing files (except entity.go if it is being parsed)")
+	cmd.Flags().StringVar(&only, "only", "", "Selective generation: views, handler, service, repo, entity, migrations")
 	_ = cmd.MarkFlagRequired("name")
 
 	return cmd
@@ -181,12 +203,17 @@ func runGenerate(def ResourceDef) error {
 	}
 
 	funcMap := template.FuncMap{
-		"add": func(a, b int) int { return a + b },
-		"len": func(s []FieldDef) int { return len(s) },
+		"add":   func(a, b int) int { return a + b },
+		"len":   func(s []FieldDef) int { return len(s) },
 		"lower": strings.ToLower,
 	}
 
 	for _, step := range steps {
+		// Selective generation filtering
+		if def.Only != "" && !shouldGenerate(step.tmplPath, def.Only) {
+			continue
+		}
+
 		// Read template from embedded FS.
 		tmplBytes, err := templateFS.ReadFile(step.tmplPath)
 		if err != nil {
@@ -205,11 +232,26 @@ func runGenerate(def ResourceDef) error {
 
 		// Guard: skip if file already exists, unless force is true.
 		// Never overwrite the struct file if it's the one we are parsing from.
-		if def.Force && !(step.tmplPath == "templates/entity.tmpl" && def.StructFile != "") {
-			// allow overwrite
-		} else if _, err := os.Stat(step.outPath); err == nil {
-			fmt.Printf("  ⚠ skip  %s (already exists)\n", step.outPath)
-			continue
+		if _, err := os.Stat(step.outPath); err == nil {
+			if !def.Force {
+				fmt.Printf("  ⚠ skip  %s (already exists)\n", step.outPath)
+				continue
+			}
+
+			// Smart Merge for .templ files
+			if strings.HasSuffix(step.outPath, ".templ") {
+				merged, err := smartMergeTempl(step.outPath, step.tmplPath, def)
+				if err == nil && merged {
+					fmt.Printf("  ✓ merged %s\n", step.outPath)
+					continue
+				}
+				// if merge failed or not applicable, fall through to overwrite
+			}
+
+			if step.tmplPath == "templates/entity.tmpl" && def.StructFile != "" {
+				fmt.Printf("  ⚠ skip  %s (prevent self-overwrite)\n", step.outPath)
+				continue
+			}
 		}
 
 		f, err := os.Create(step.outPath)
@@ -356,21 +398,61 @@ func parseStructFields(filePath, structName string) ([]FieldDef, error) {
 				goType := exprToString(field.Type)
 				col := toSnake(goName)
 				inputType, component, options := goTypeToInputAndComponent(goName, goType, field.Tag)
+				rel, relName := detectRelation(goName, goType, field.Tag)
+
 				fields = append(fields, FieldDef{
-					GoName:      goName,
-					GoType:      goType,
-					ColumnName:  col,
-					Label:       toLabel(goName),
-					FormName:    col,
-					Placeholder: "Enter " + strings.ToLower(toLabel(goName)),
-					InputType:   inputType,
-					Component:   component,
-					Options:     options,
+					GoName:       goName,
+					GoType:       goType,
+					ColumnName:   col,
+					Label:        toLabel(goName),
+					FormName:     col,
+					Placeholder:  "Enter " + strings.ToLower(toLabel(goName)),
+					InputType:    inputType,
+					Component:    component,
+					Options:      options,
+					Relation:     rel,
+					RelationName: relName,
 				})
 			}
 		}
 	}
 	return fields, nil
+}
+
+func detectRelation(goName, goType string, tag *ast.BasicLit) (RelationType, string) {
+	// 1. Check tag for explicit relation
+	if tag != nil {
+		tagStr := tag.Value
+		if strings.Contains(tagStr, "rel:belongs-to") {
+			return RelBelongsTo, strings.TrimPrefix(goType, "*")
+		}
+		if strings.Contains(tagStr, "rel:has-many") {
+			return RelHasMany, strings.TrimPrefix(strings.TrimPrefix(goType, "[]"), "*")
+		}
+		if strings.Contains(tagStr, "rel:has-one") {
+			return RelHasOne, strings.TrimPrefix(goType, "*")
+		}
+	}
+
+	// 2. Inference from type
+	if strings.HasPrefix(goType, "[]") {
+		// Slice of custom structs (usually)
+		relName := strings.TrimPrefix(strings.TrimPrefix(goType, "[]"), "*")
+		// Primitive slices are not relations
+		switch relName {
+		case "string", "int", "int64", "float64", "bool", "byte":
+			return RelNone, ""
+		}
+		return RelHasMany, relName
+	}
+
+	// 3. Inference from name
+	if strings.HasSuffix(goName, "ID") && goName != "ID" {
+		relName := strings.TrimSuffix(goName, "ID")
+		return RelBelongsTo, relName
+	}
+
+	return RelNone, ""
 }
 
 func exprToString(expr ast.Expr) string {
@@ -476,6 +558,153 @@ func goTypeToInputAndComponent(goName, goType string, tag *ast.BasicLit) (string
 		}
 		return "text", "Input", nil
 	}
+}
+
+func shouldGenerate(tmplPath, only string) bool {
+	switch only {
+	case "views":
+		return strings.Contains(tmplPath, "/views/")
+	case "handler":
+		return strings.Contains(tmplPath, "handler.tmpl")
+	case "service":
+		return strings.Contains(tmplPath, "service.tmpl")
+	case "repo":
+		return strings.Contains(tmplPath, "repository.tmpl")
+	case "entity":
+		return strings.Contains(tmplPath, "entity.tmpl")
+	case "migrations":
+		return strings.Contains(tmplPath, "migration_")
+	default:
+		return true
+	}
+}
+
+func smartMergeTempl(outPath, tmplPath string, def ResourceDef) (bool, error) {
+	content, err := os.ReadFile(outPath)
+	if err != nil {
+		return false, err
+	}
+	strContent := string(content)
+
+	// Only support merging into FormGrid or List Tables
+	isView := strings.Contains(tmplPath, "/views/")
+	if !isView {
+		return false, nil
+	}
+
+	if strings.Contains(tmplPath, "create.tmpl") || strings.Contains(tmplPath, "update.tmpl") {
+		return mergeFormView(outPath, strContent, def)
+	}
+
+	if strings.Contains(tmplPath, "list.tmpl") {
+		return mergeListView(outPath, strContent, def)
+	}
+
+	return false, nil
+}
+
+func mergeFormView(outPath, strContent string, def ResourceDef) (bool, error) {
+	// Find the FormGrid block
+	gridRegex := regexp.MustCompile(`(@components\.FormGrid\(\) \{)([\s\S]*?)(\n\s*\})`)
+	loc := gridRegex.FindStringSubmatchIndex(strContent)
+	if loc == nil {
+		return false, nil
+	}
+
+	existingGridBody := strContent[loc[4]:loc[5]]
+	var fieldsToInject []FieldDef
+
+	for _, field := range def.Fields {
+		// skip relations that are collections (HasMany) in the form
+		if field.Relation == RelHasMany {
+			continue
+		}
+
+		// check if field already exists in the grid body
+		if strings.Contains(existingGridBody, fmt.Sprintf(`Name: "%s"`, field.FormName)) ||
+			strings.Contains(existingGridBody, fmt.Sprintf(`Name: "%s"`, toSnake(field.GoName))) {
+			continue
+		}
+		fieldsToInject = append(fieldsToInject, field)
+	}
+
+	if len(fieldsToInject) == 0 {
+		return true, nil
+	}
+
+	// Build injection string
+	var sb strings.Builder
+	for _, field := range fieldsToInject {
+		sb.WriteString("\n\t\t\t\t\t\t")
+		if field.Component == "SelectBox" {
+			sb.WriteString(fmt.Sprintf(`@components.SelectBox(components.SelectBoxProps{Label: "%s", Name: "%s"})`, field.Label, field.FormName))
+		} else if field.Component == "Textarea" {
+			sb.WriteString(fmt.Sprintf(`@components.Textarea(components.TextareaProps{Label: "%s", Name: "%s", Placeholder: "%s"})`, field.Label, field.FormName, field.Placeholder))
+		} else {
+			sb.WriteString(fmt.Sprintf(`@components.Input(components.InputProps{Label: "%s", Name: "%s", Type: "%s", Placeholder: "%s"})`, field.Label, field.FormName, field.InputType, field.Placeholder))
+		}
+	}
+
+	// Inject before the closing brace of FormGrid
+	newContent := strContent[:loc[5]] + sb.String() + strContent[loc[5]:]
+	return true, os.WriteFile(outPath, []byte(newContent), 0o644)
+}
+
+func mergeListView(outPath, strContent string, def ResourceDef) (bool, error) {
+	// 1. Merge Headers
+	// Look for the last </th> before "Actions"
+	headerRegex := regexp.MustCompile(`(<th[\s\S]*?Actions[\s\S]*?<\/th>)`)
+	locHeader := headerRegex.FindStringIndex(strContent)
+	if locHeader == nil {
+		return false, nil
+	}
+
+	// 2. Merge Cells
+	cellRegex := regexp.MustCompile(`(<td[\s\S]*?item\.ID[\s\S]*?edit[\s\S]*?<\/td>)`)
+	locCell := cellRegex.FindStringIndex(strContent)
+	if locCell == nil {
+		// fallback to searching for common action buttons
+		cellRegex = regexp.MustCompile(`(<td[\s\S]*?pencil[\s\S]*?<\/td>)`)
+		locCell = cellRegex.FindStringIndex(strContent)
+	}
+
+	var fieldsToInject []FieldDef
+	for _, field := range def.Fields {
+		if field.Relation == RelHasMany {
+			continue // skip collections in table
+		}
+		if strings.Contains(strContent, fmt.Sprintf("item.%s", field.GoName)) {
+			continue
+		}
+		fieldsToInject = append(fieldsToInject, field)
+	}
+
+	if len(fieldsToInject) == 0 {
+		return true, nil
+	}
+
+	newContent := strContent
+	offset := 0
+
+	// Inject Headers
+	var thSb strings.Builder
+	for _, field := range fieldsToInject {
+		thSb.WriteString(fmt.Sprintf("\n\t\t\t\t\t\t\t<th scope=\"col\" class=\"px-3 py-4 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider\">%s</th>", field.Label))
+	}
+	newContent = newContent[:locHeader[0]] + thSb.String() + "\n\t\t\t\t\t\t\t" + newContent[locHeader[0]:]
+	offset += thSb.Len() + 9 // estimate offset for second injection
+
+	// Re-find cell location after header injection
+	locCell = cellRegex.FindStringIndex(newContent)
+	if locCell != nil {
+		var tdSb strings.Builder
+		for _, field := range fieldsToInject {
+			tdSb.WriteString(fmt.Sprintf("\n\t\t\t\t\t\t\t\t\t<td class=\"whitespace-nowrap px-3 py-5 text-sm text-slate-500\">{ fmt.Sprintf(\"%%v\", item.%s) }</td>", field.GoName))
+		}
+		newContent = newContent[:locCell[0]] + tdSb.String() + "\n\t\t\t\t\t\t\t\t\t" + newContent[locCell[0]:]
+	}
+
+	return true, os.WriteFile(outPath, []byte(newContent), 0o644)
 }
 
 // ── string helpers ─────────────────────────────────────────────────────────────
@@ -586,5 +815,3 @@ func readModulePath(goModPath string) (string, error) {
 	}
 	return "", fmt.Errorf("module declaration not found in %s", goModPath)
 }
-
-

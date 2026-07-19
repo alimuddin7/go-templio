@@ -31,7 +31,13 @@ func New(db *bun.DB) *Repository {
 
 func (r *Repository) FindByID(ctx context.Context, id int64) (*{{.PackageName}}.{{.Name}}, error) {
 	m := new({{.PackageName}}Model)
-	err := r.db.NewSelect().Model(m).Where("id = ?", id).Scan(ctx)
+	q := r.db.NewSelect().Model(m)
+
+	{{- range .Fields }}{{ if .Relation }}
+	q = q.Relation("{{.GoName}}")
+	{{- end }}{{ end }}
+
+	err := q.Where("id = ?", id).Scan(ctx)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, errors.New("{{.PackageName}}: not found")
@@ -44,6 +50,10 @@ func (r *Repository) FindByID(ctx context.Context, id int64) (*{{.PackageName}}.
 func (r *Repository) List(ctx context.Context, search string, offset, limit int) ([]*{{.PackageName}}.{{.Name}}, int64, error) {
 	var models []{{.PackageName}}Model
 	q := r.db.NewSelect().Model(&models)
+
+	{{- range .Fields }}{{ if .Relation }}
+	q = q.Relation("{{.GoName}}")
+	{{- end }}{{ end }}
 
 	if search != "" {
 		q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {

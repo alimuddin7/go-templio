@@ -174,5 +174,45 @@ templ Update(item *{{.PackageName}}.{{.Name}}, navItems []navigation.Item, formE
 				</div>
 			</form>
 		</div>
+
+		{{- range .Fields }}{{ if eq .Relation "has-many" }}
+		<div class="mt-8 bg-white dark:bg-slate-900/50 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-8 sm:p-12 transition-all backdrop-blur-sm">
+			@components.FormSection("Related {{.RelationName}}s", "List of {{.RelationName | lower}}s linked to this {{$.Name | lower}}.") {
+				<div class="mt-6 flow-root">
+					<div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+						<div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+							<table class="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
+								<thead>
+									<tr>
+										<th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-slate-900 dark:text-white sm:pl-0">Details</th>
+										<th scope="col" class="px-3 py-3.5 text-right text-sm font-semibold text-slate-900 dark:text-white">Actions</th>
+									</tr>
+								</thead>
+								<tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+									for _, sub := range item.{{.GoName}} {
+										<tr>
+											<td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-slate-900 dark:text-white sm:pl-0">
+												{ fmt.Sprintf("%v", sub) }
+											</td>
+											<td class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
+												<a href="#" class="text-indigo-600 hover:text-indigo-900 transition-colors">View</a>
+											</td>
+										</tr>
+									}
+									if len(item.{{.GoName}}) == 0 {
+										<tr>
+											<td colspan="2" class="py-10 text-center text-sm text-slate-500">
+												No {{.RelationName | lower}}s found.
+											</td>
+										</tr>
+									}
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			}
+		</div>
+		{{- end }}{{ end }}
 	}
 }
